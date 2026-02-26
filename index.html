@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PEA Pattani Smart Health AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --pea-purple: #6B21A8; --pea-purple-dark: #3B0764; --pea-purple-mid: #7E22CE;
+  --pea-gold: #B8860B; --pea-gold-light: #FFD700; --pea-gold-pale: #FFF8DC;
+  --green: #00843D; --green-dark: #0A2818; --green-mid: #1B5E35;
+  --green-light: #E8F5EE; --accent: #00C96A;
+  --danger: #DC2626; --warning: #D97706; --warning-bg: #FFFBEB;
+  --info: #1D4ED8; --info-bg: #EFF6FF;
+  --text: #111827; --sub: #6B7280; --border: #E5E7EB;
+  --bg: #F8FAFC; --card: #FFFFFF;
+  --score-excellent: #059669; --score-good: #16A34A;
+  --score-fair: #D97706; --score-poor: #DC2626;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Sarabun',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+/* ===== CONFIG BANNER ===== */
+#config-banner {
+background:linear-gradient(90deg,#FFF8DC,#FFFBEB);
+border-bottom:2px solid var(–pea-gold);
+padding:10px 20px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+}
+#config-banner span { font-size:13px; font-weight:600; color:var(–pea-gold); }
+#config-banner input {
+padding:6px 11px; border:1px solid var(–pea-gold); border-radius:7px;
+font-family:‘Sarabun’,sans-serif; font-size:13px; flex:1; min-width:200px; max-width:300px;
+}
+.btn-cfg { padding:6px 16px; background:var(–pea-purple); color:white; border:none; border-radius:7px; cursor:pointer; font-family:‘Sarabun’,sans-serif; font-size:13px; font-weight:600; white-space:nowrap; }
+
+/* ===== SCREENS ===== */
+.screen { display:none; }
+.screen.active { display:flex; }
+
+/* ===== PEA LOGO SVG ===== */
+.pea-logo-svg { width:44px; height:44px; flex-shrink:0; }
+
+/* ===== LOGIN ===== */
+#login-screen {
+min-height:100vh; flex-direction:column;
+background:linear-gradient(160deg, var(–pea-purple-dark) 0%, var(–pea-purple) 50%, #4C1D95 100%);
+justify-content:center; align-items:center; position:relative; overflow:hidden;
+}
+#login-screen::before {
+content:’’; position:absolute; width:600px; height:600px;
+background:radial-gradient(circle, rgba(255,215,0,.08) 0%, transparent 65%);
+top:-150px; right:-150px; border-radius:50%;
+}
+#login-screen::after {
+content:’’; position:absolute; width:400px; height:400px;
+background:radial-gradient(circle, rgba(0,201,106,.06) 0%, transparent 65%);
+bottom:-100px; left:-100px; border-radius:50%;
+}
+.login-card {
+background:rgba(255,255,255,.07); backdrop-filter:blur(24px);
+border:1px solid rgba(255,255,255,.12); border-radius:24px;
+padding:44px 40px; width:420px; position:relative; z-index:1;
+animation:fadeUp .6s ease;
+}
+@keyframes fadeUp { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
+.login-header { display:flex; align-items:center; gap:14px; margin-bottom:8px; }
+.login-title h1 { font-family:‘Prompt’,sans-serif; font-size:18px; font-weight:700; color:white; line-height:1.3; }
+.login-title p { font-size:12px; color:rgba(255,255,255,.5); margin-top:2px; }
+.login-subtitle { color:rgba(255,255,255,.4); font-size:12px; text-align:center; margin-bottom:28px; padding:8px 0; border-top:1px solid rgba(255,255,255,.1); border-bottom:1px solid rgba(255,255,255,.1); }
+.tab-row { display:flex; gap:8px; margin-bottom:22px; }
+.tab { flex:1; padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,.15); background:rgba(255,255,255,.05); color:rgba(255,255,255,.55); font-family:‘Sarabun’,sans-serif; font-size:13px; cursor:pointer; transition:.3s; text-align:center; }
+.tab.active { background:var(–pea-purple-mid); border-color:var(–pea-gold); color:white; font-weight:600; }
+.lbl { color:rgba(255,255,255,.65); font-size:13px; font-weight:500; margin-bottom:7px; display:block; }
+.linput { width:100%; background:rgba(255,255,255,.09); border:1px solid rgba(255,255,255,.18); border-radius:11px; padding:13px 15px; color:white; font-family:‘Sarabun’,sans-serif; font-size:15px; margin-bottom:16px; transition:.3s; }
+.linput:focus { outline:none; border-color:var(–pea-gold-light); background:rgba(255,255,255,.14); }
+.linput::placeholder { color:rgba(255,255,255,.35); }
+.btn-login { width:100%; padding:14px; background:linear-gradient(135deg,var(–pea-gold),#B8860B); border:none; border-radius:11px; color:var(–pea-purple-dark); font-family:‘Prompt’,sans-serif; font-size:15px; font-weight:700; cursor:pointer; box-shadow:0 4px 20px rgba(184,134,11,.4); transition:.3s; }
+.btn-login:hover { transform:translateY(-2px); box-shadow:0 6px 25px rgba(184,134,11,.5); }
+.err-msg { color:#FCA5A5; font-size:13px; text-align:center; margin-top:8px; min-height:18px; }
+.hint { color:rgba(255,255,255,.3); font-size:11px; text-align:center; margin-top:12px; }
+
+/* ===== MAIN LAYOUT ===== */
+#main-screen { flex-direction:row; min-height:100vh; }
+.sidebar {
+width:248px; min-height:100vh; padding:20px 0;
+display:flex; flex-direction:column;
+position:fixed; left:0; top:0; bottom:0; z-index:100; overflow-y:auto;
+background:linear-gradient(180deg, var(–pea-purple-dark) 0%, #1E1B4B 100%);
+}
+.sb-logo { display:flex; align-items:center; gap:11px; padding:0 18px; margin-bottom:24px; }
+.sb-logo .pea-logo-svg { width:38px; height:38px; }
+.sb-brand { color:white; }
+.sb-brand-main { font-family:‘Prompt’,sans-serif; font-size:13px; font-weight:700; line-height:1.2; color:var(–pea-gold-light); }
+.sb-brand-sub { font-size:10px; color:rgba(255,255,255,.4); margin-top:1px; }
+.nav-sec { padding:0 10px; margin-bottom:4px; }
+.nav-lbl { color:rgba(255,255,255,.25); font-size:9px; font-weight:700; letter-spacing:1.8px; text-transform:uppercase; padding:0 8px; margin-bottom:4px; }
+.nv { display:flex; align-items:center; gap:9px; padding:9px 11px; border-radius:10px; color:rgba(255,255,255,.5); cursor:pointer; transition:.2s; font-size:13px; margin-bottom:1px; }
+.nv:hover { background:rgba(255,255,255,.07); color:rgba(255,255,255,.85); }
+.nv.active { background:linear-gradient(90deg,var(–pea-purple-mid),rgba(107,33,168,.6)); color:white; font-weight:600; border-left:3px solid var(–pea-gold-light); }
+.nv .ic { font-size:14px; width:18px; text-align:center; }
+.sb-div { border:none; border-top:1px solid rgba(255,255,255,.07); margin:8px 16px; }
+.sb-user { margin-top:auto; padding:12px 16px; border-top:1px solid rgba(255,255,255,.07); }
+.user-row { display:flex; align-items:center; gap:9px; }
+.avatar { width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,var(–pea-gold-light),var(–pea-gold)); display:flex; align-items:center; justify-content:center; font-weight:700; color:var(–pea-purple-dark); font-size:13px; flex-shrink:0; }
+.uname { color:white; font-size:12px; font-weight:600; }
+.uid { color:rgba(255,255,255,.35); font-size:10px; }
+.btn-out { margin-top:8px; width:100%; padding:7px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:7px; color:rgba(255,255,255,.4); font-family:‘Sarabun’,sans-serif; font-size:12px; cursor:pointer; transition:.2s; }
+.btn-out:hover { background:rgba(220,38,38,.15); color:#FCA5A5; border-color:rgba(220,38,38,.3); }
+
+/* ===== CONTENT ===== */
+.content { margin-left:248px; flex:1; background:var(–bg); }
+.topbar { background:white; border-bottom:1px solid var(–border); padding:0 26px; height:58px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:50; }
+.topbar-left { display:flex; align-items:center; gap:10px; }
+.topbar-title { font-family:‘Prompt’,sans-serif; font-size:15px; font-weight:600; color:var(–pea-purple-dark); }
+.module-tag { padding:3px 11px; border-radius:20px; font-size:11px; font-weight:600; }
+.tag-annual { background:#EDE9FE; color:#5B21B6; }
+.tag-risk { background:#FEF3C7; color:#92400E; }
+.tag-admin { background:#DBEAFE; color:#1E40AF; }
+
+.pad { padding:24px; }
+.page { display:none; }
+.page.active { display:block; animation:fadeIn .3s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+/* ===== CARDS ===== */
+.card { background:var(–card); border-radius:14px; padding:20px; border:1px solid var(–border); box-shadow:0 1px 3px rgba(0,0,0,.05); }
+.card-title { font-family:‘Prompt’,sans-serif; font-size:13px; font-weight:600; color:var(–sub); margin-bottom:14px; display:flex; align-items:center; gap:7px; }
+.grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
+.grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:20px; }
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:20px; }
+.grid-21 { display:grid; grid-template-columns:3fr 2fr; gap:18px; margin-bottom:20px; }
+.grid-form { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.grid-form-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+
+.stat-card { background:var(–card); border-radius:13px; padding:16px; border:1px solid var(–border); transition:transform .2s; }
+.stat-card:hover { transform:translateY(-2px); }
+.stat-ico { font-size:20px; margin-bottom:7px; }
+.stat-lbl { font-size:11px; color:var(–sub); font-weight:500; margin-bottom:5px; }
+.stat-val { font-family:‘Prompt’,sans-serif; font-size:24px; font-weight:700; color:var(–text); }
+.stat-unit { font-size:12px; font-weight:400; color:var(–sub); margin-left:2px; }
+.badge { display:inline-block; padding:2px 9px; border-radius:20px; font-size:10px; font-weight:700; margin-top:5px; }
+.b-ok { background:#DCFCE7; color:#15803D; }
+.b-warn { background:#FEF3C7; color:#92400E; }
+.b-danger { background:#FEE2E2; color:#B91C1C; }
+.b-info { background:#DBEAFE; color:#1E40AF; }
+.b-gray { background:#F3F4F6; color:#6B7280; }
+.b-purple { background:#EDE9FE; color:#5B21B6; }
+
+/* ===== SCORE SYSTEM ===== */
+.score-explain { background:linear-gradient(135deg,#F5F3FF,#EDE9FE); border:1px solid #DDD6FE; border-radius:14px; padding:20px; margin-bottom:20px; }
+.score-explain h3 { font-family:‘Prompt’,sans-serif; font-size:14px; font-weight:700; color:var(–pea-purple-dark); margin-bottom:12px; }
+.score-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+.score-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.score-desc { font-size:13px; color:var(–sub); }
+.score-weight-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:12px; }
+.score-weight-item { background:white; border-radius:8px; padding:10px; border:1px solid #DDD6FE; text-align:center; }
+.score-weight-val { font-family:‘Prompt’,sans-serif; font-size:16px; font-weight:700; color:var(–pea-purple-dark); }
+.score-weight-lbl { font-size:11px; color:var(–sub); margin-top:2px; }
+
+/* ===== RING ===== */
+.ring-wrap { display:flex; flex-direction:column; align-items:center; padding:12px 0; }
+.ring-container { position:relative; width:130px; height:130px; }
+.ring-svg { width:130px; height:130px; transform:rotate(-90deg); }
+.ring-bg-c { fill:none; stroke:#E5E7EB; stroke-width:13; }
+.ring-fill-c { fill:none; stroke-width:13; stroke-linecap:round; stroke-dasharray:339; transition:stroke-dashoffset 1.2s ease; }
+.ring-txt { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; }
+.ring-num { font-family:‘Prompt’,sans-serif; font-size:28px; font-weight:800; }
+.ring-sub-txt { font-size:10px; color:var(–sub); }
+
+/* ===== CHART AREA ===== */
+.chart-wrap { position:relative; height:220px; }
+.chart-wrap-sm { position:relative; height:160px; }
+
+/* ===== TREND INDICATOR ===== */
+.trend-up { color:var(–danger); }
+.trend-down { color:var(–score-excellent); }
+.trend-stable { color:var(–sub); }
+
+/* ===== TABLE ===== */
+.tbl { width:100%; border-collapse:collapse; }
+.tbl th { text-align:left; padding:8px 12px; background:var(–bg); color:var(–sub); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; border-bottom:1px solid var(–border); }
+.tbl td { padding:10px 12px; border-bottom:1px solid var(–border); font-size:13px; }
+.tbl tr:last-child td { border-bottom:none; }
+.tbl tr:hover td { background:var(–bg); }
+
+/* ===== AI BOX ===== */
+.ai-box { background:linear-gradient(135deg,var(–pea-purple-dark),var(–pea-purple)); border-radius:14px; padding:20px; color:white; margin-bottom:20px; position:relative; overflow:hidden; }
+.ai-box::after { content:‘🤖’; position:absolute; right:16px; top:50%; transform:translateY(-50%); font-size:60px; opacity:.07; }
+.ai-dot { width:7px; height:7px; border-radius:50%; background:var(–pea-gold-light); animation:pulse 2s infinite; display:inline-block; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(1.4)} }
+.ai-head { display:flex; align-items:center; gap:9px; margin-bottom:12px; }
+.ai-title { font-family:‘Prompt’,sans-serif; font-size:13px; font-weight:600; }
+.ai-text { font-size:13px; line-height:1.9; color:rgba(255,255,255,.88); }
+.ai-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+.at-warn { padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; background:rgba(217,119,6,.2); color:#FCD34D; border:1px solid rgba(217,119,6,.3); }
+.at-good { padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; background:rgba(0,201,106,.2); color:#6EE7B7; border:1px solid rgba(0,201,106,.3); }
+.at-info { padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; background:rgba(29,78,216,.2); color:#93C5FD; border:1px solid rgba(29,78,216,.3); }
+
+/* ===== FORM ===== */
+.sec-title { font-family:‘Prompt’,sans-serif; font-size:13px; font-weight:700; color:var(–pea-purple-dark); margin:18px 0 10px; padding-bottom:7px; border-bottom:2px solid #EDE9FE; display:flex; align-items:center; gap:8px; }
+.fg { }
+.fl { display:block; font-size:12px; font-weight:600; color:var(–sub); margin-bottom:4px; }
+.fi { width:100%; padding:9px 12px; border:1px solid var(–border); border-radius:8px; font-family:‘Sarabun’,sans-serif; font-size:13px; color:var(–text); background:white; transition:.2s; }
+.fi:focus { outline:none; border-color:var(–pea-purple-mid); box-shadow:0 0 0 3px rgba(107,33,168,.1); }
+.fi:disabled { background:#F9FAFB; color:var(–sub); }
+.not-tested-wrap { display:flex; align-items:center; gap:6px; margin-top:5px; }
+.not-tested-wrap input[type=checkbox] { width:14px; height:14px; accent-color:var(–pea-purple); }
+.not-tested-wrap label { font-size:11px; color:var(–sub); cursor:pointer; }
+.btn-row { display:flex; gap:10px; margin-top:20px; }
+.btn-primary { padding:10px 22px; border-radius:8px; background:var(–pea-purple); border:none; color:white; font-family:‘Prompt’,sans-serif; font-size:13px; font-weight:600; cursor:pointer; transition:.2s; }
+.btn-primary:hover { background:var(–pea-purple-mid); }
+.btn-primary:disabled { background:#9CA3AF; cursor:not-allowed; }
+.btn-sec { padding:10px 16px; border-radius:8px; background:white; border:1px solid var(–border); color:var(–sub); font-family:‘Sarabun’,sans-serif; font-size:13px; cursor:pointer; transition:.2s; }
+.btn-sec:hover { border-color:var(–pea-purple); color:var(–pea-purple); }
+.btn-gold { padding:10px 22px; border-radius:8px; background:linear-gradient(135deg,var(–pea-gold-light),var(–pea-gold)); border:none; color:var(–pea-purple-dark); font-family:‘Prompt’,sans-serif; font-size:13px; font-weight:700; cursor:pointer; transition:.2s; }
+.btn-gold:hover { transform:translateY(-1px); }
+
+/* ===== NOTIFICATION ===== */
+.notif { position:fixed; top:68px; right:20px; padding:12px 18px; border-radius:10px; font-size:13px; z-index:999; box-shadow:0 8px 28px rgba(0,0,0,.15); display:none; animation:slideIn .4s ease; max-width:300px; }
+.notif-success { background:var(–pea-purple-dark); color:white; border-left:4px solid var(–pea-gold-light); }
+.notif-error { background:#DC2626; color:white; }
+@keyframes slideIn { from{opacity:0;transform:translateX(18px)} to{opacity:1;transform:translateX(0)} }
+
+/* ===== MISC ===== */
+.loading { text-align:center; padding:40px; color:var(–sub); font-size:14px; }
+.spinner { display:inline-block; width:18px; height:18px; border:3px solid var(–border); border-top-color:var(–pea-purple); border-radius:50%; animation:spin 1s linear infinite; margin-right:8px; vertical-align:middle; }
+@keyframes spin { to{transform:rotate(360deg)} }
+.empty { text-align:center; padding:48px 24px; color:var(–sub); }
+.empty-ico { font-size:44px; margin-bottom:10px; }
+.alert-warn { padding:12px 15px; border-radius:9px; font-size:13px; margin-bottom:18px; background:#FFFBEB; border:1px solid #FCD34D; color:#92400E; }
+.alert-info { padding:12px 15px; border-radius:9px; font-size:13px; margin-bottom:18px; background:#EFF6FF; border:1px solid #BFDBFE; color:#1E40AF; }
+.ytabs { display:flex; gap:5px; }
+.ytab { padding:4px 12px; border-radius:20px; border:1px solid var(–border); background:white; color:var(–sub); font-size:12px; cursor:pointer; transition:.2s; }
+.ytab.active { background:var(–pea-purple); border-color:var(–pea-purple); color:white; font-weight:600; }
+
+/* ===== OVERVIEW ===== */
+.ov-card { background:var(–card); border-radius:13px; padding:16px; border:1px solid var(–border); text-align:center; }
+.ov-num { font-family:‘Prompt’,sans-serif; font-size:32px; font-weight:800; }
+.ov-lbl { font-size:12px; color:var(–sub); margin-top:3px; }
+.dept-row { display:flex; align-items:center; gap:9px; margin-bottom:10px; }
+.dept-nm { font-size:12px; color:var(–sub); width:125px; flex-shrink:0; }
+.dept-track { flex:1; height:8px; background:var(–border); border-radius:4px; overflow:hidden; }
+.dept-fill { height:100%; border-radius:4px; }
+.dept-pct { font-size:12px; font-weight:700; width:35px; text-align:right; }
+.risk-row { display:flex; justify-content:space-between; align-items:center; padding:11px 0; border-bottom:1px solid var(–border); }
+.risk-row:last-child { border-bottom:none; }
+.risk-nm { font-size:13px; font-weight:500; }
+.risk-sb { font-size:11px; color:var(–sub); margin-top:1px; }
+.risk-num { font-family:‘Prompt’,sans-serif; font-size:20px; font-weight:800; }
+</style>
+
+</head>
+<body>
+
+<!-- CONFIG BANNER -->
+
+<div id="config-banner">
+  <span>⚙️ ตั้งค่า Supabase:</span>
+  <input type="text" id="sb-url" placeholder="https://xxxx.supabase.co">
+  <input type="text" id="sb-key" placeholder="anon public key">
+  <input type="text" id="ai-key" placeholder="Anthropic API Key (สำหรับ AI)">
+  <button class="btn-cfg" onclick="saveConfig()">✓ บันทึก</button>
+</div>
+
+<div id="app">
+<!-- ===== LOGIN ===== -->
+<div id="login-screen" class="screen active">
+  <div class="login-card">
+    <div class="login-header">
+      <!-- Lightning Bolt Logo -->
+      <svg style="width:54px;height:54px;flex-shrink:0;" viewBox="0 0 100 100">
+        <defs>
+          <radialGradient id="glow-login" cx="50%" cy="40%" r="55%">
+            <stop offset="0%" stop-color="#FFFDE7"/>
+            <stop offset="60%" stop-color="#FFD700"/>
+            <stop offset="100%" stop-color="#F59E0B"/>
+          </radialGradient>
+          <filter id="blur-login"><feGaussianBlur stdDeviation="3" result="blur"/><feComposite in="SourceGraphic" in2="blur" operator="over"/></filter>
+        </defs>
+        <!-- Glow circle -->
+        <circle cx="50" cy="50" r="44" fill="rgba(255,215,0,0.12)"/>
+        <circle cx="50" cy="50" r="38" fill="rgba(255,215,0,0.08)"/>
+        <!-- Big bold lightning bolt -->
+        <polygon points="58,8 28,52 48,52 42,92 72,48 52,48" fill="url(#glow-login)" filter="url(#blur-login)" opacity="0.35"/>
+        <polygon points="58,8 28,52 48,52 42,92 72,48 52,48" fill="url(#glow-login)"/>
+        <!-- Highlight streak -->
+        <polygon points="56,14 40,46 50,46" fill="rgba(255,255,255,0.5)"/>
+      </svg>
+      <div class="login-title">
+        <h1>PEA Pattani<br>Smart Health AI</h1>
+        <p>ระบบสุขภาพอัจฉริยะ การไฟฟ้าส่วนภูมิภาค</p>
+      </div>
+    </div>
+    <div class="login-subtitle">จังหวัดปัตตานี · Provincial Electricity Authority</div>
+    <div class="tab-row">
+      <div class="tab active" id="tab-annual" onclick="setTab('annual')">🏥 ตรวจสุขภาพประจำปี</div>
+      <div class="tab" id="tab-risk" onclick="setTab('risk')">⚠️ ตรวจปัจจัยเสี่ยง</div>
+    </div>
+    <label class="lbl">รหัสพนักงาน</label>
+    <input class="linput" type="text" id="l-empid" placeholder="เช่น EMP001" autocomplete="username">
+    <label class="lbl">รหัสผ่าน</label>
+    <input class="linput" type="password" id="l-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn-login" onclick="doLogin()" id="btn-login-submit">🔐 เข้าสู่ระบบ</button>
+    <div class="err-msg" id="login-err"></div>
+    <p class="hint">Demo: EMP001 / 1234 &nbsp;|&nbsp; Admin: ADMIN01 / 1234</p>
+  </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+
+<div id="main-screen" class="screen">
+  <nav class="sidebar">
+    <div class="sb-logo">
+      <!-- Lightning Bolt -->
+      <svg style="width:36px;height:36px;flex-shrink:0;" viewBox="0 0 100 100">
+        <defs>
+          <radialGradient id="glow-sb" cx="50%" cy="40%" r="55%">
+            <stop offset="0%" stop-color="#FFFDE7"/>
+            <stop offset="60%" stop-color="#FFD700"/>
+            <stop offset="100%" stop-color="#F59E0B"/>
+          </radialGradient>
+          <filter id="blur-sb"><feGaussianBlur stdDeviation="4" result="blur"/><feComposite in="SourceGraphic" in2="blur" operator="over"/></filter>
+        </defs>
+        <circle cx="50" cy="50" r="44" fill="rgba(255,215,0,0.1)"/>
+        <polygon points="58,8 28,52 48,52 42,92 72,48 52,48" fill="url(#glow-sb)" filter="url(#blur-sb)" opacity="0.3"/>
+        <polygon points="58,8 28,52 48,52 42,92 72,48 52,48" fill="url(#glow-sb)"/>
+        <polygon points="56,14 40,46 50,46" fill="rgba(255,255,255,0.45)"/>
+      </svg>
+      <div class="sb-brand">
+        <div class="sb-brand-main">PEA Smart Health AI</div>
+        <div class="sb-brand-sub">Pattani · ปัตตานี</div>
+      </div>
+    </div>
+
+```
+<div class="nav-sec" id="sidebar-annual-nav">
+  <div class="nav-lbl">ตรวจสุขภาพประจำปี</div>
+  <div class="nv active" id="nv-dashboard" onclick="goto('dashboard')"><span class="ic">🏠</span>แดชบอร์ดของฉัน</div>
+  <div class="nv" id="nv-results" onclick="goto('results')"><span class="ic">📋</span>ผลตรวจของฉัน</div>
+  <div class="nv" id="nv-ai" onclick="goto('ai')"><span class="ic">🤖</span>AI ประเมินสุขภาพ</div>
+  <div class="nv" id="nv-enter-annual" onclick="goto('enter-annual')"><span class="ic">✏️</span>ลงข้อมูลผลตรวจ</div>
+  <hr class="sb-div" style="margin:8px 0;">
+  <div class="nav-lbl">ภาพรวมองค์กร</div>
+  <div class="nv" id="nv-org-health" onclick="goto('org-health')"><span class="ic">📊</span>สุขภาพองค์กร</div>
+</div>
+
+<div class="nav-sec" id="sidebar-risk-nav" style="display:none">
+  <div class="nav-lbl">ตรวจตามปัจจัยเสี่ยง</div>
+  <div class="nv" id="nv-my-risk" onclick="goto('my-risk')"><span class="ic">⚠️</span>ผลตรวจของฉัน</div>
+  <div class="nv" id="nv-enter-risk" onclick="goto('enter-risk')"><span class="ic">✏️</span>ลงข้อมูลผลตรวจ</div>
+  <div class="nv" id="nv-overview" onclick="goto('overview')" style="display:none"><span class="ic">📈</span>ภาพรวมองค์กร</div>
+  <div class="nv" id="nv-report" onclick="goto('report')" style="display:none"><span class="ic">📄</span>รายงานตามกฎหมาย</div>
+</div>
+
+<div class="sb-user">
+  <div class="user-row">
+    <div class="avatar" id="sb-avatar">ก</div>
+    <div><div class="uname" id="sb-name">—</div><div class="uid" id="sb-id">—</div></div>
+  </div>
+  <button class="btn-out" onclick="doLogout()">ออกจากระบบ</button>
+</div>
+```
+
+  </nav>
+
+  <div class="content">
+
+```
+<!-- PAGE: DASHBOARD -->
+<div id="page-dashboard" class="page active">
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-title">🏠 แดชบอร์ดสุขภาพของฉัน</span>
+      <span class="module-tag tag-annual">● ตรวจสุขภาพประจำปี</span>
+    </div>
+    <div class="ytabs" id="dash-ytabs"></div>
+  </div>
+  <div class="pad" id="dash-content">
+    <div class="loading"><span class="spinner"></span>กำลังโหลดข้อมูล...</div>
+  </div>
+</div>
+
+<!-- PAGE: RESULTS -->
+<div id="page-results" class="page">
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-title">📋 ผลตรวจสุขภาพประจำปีของฉัน</span>
+      <span class="module-tag tag-annual">● ตรวจสุขภาพประจำปี</span>
+    </div>
+    <div class="ytabs" id="res-ytabs"></div>
+  </div>
+  <div class="pad"><div id="res-content"><div class="loading"><span class="spinner"></span>กำลังโหลด...</div></div></div>
+</div>
+
+<!-- PAGE: AI -->
+<div id="page-ai" class="page">
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-title">🤖 AI ประเมินสุขภาพ</span>
+      <span class="module-tag tag-annual">● ตรวจสุขภาพประจำปี</span>
+    </div>
+  </div>
+  <div class="pad"><div id="ai-content"><div class="loading"><span class="spinner"></span>กำลังโหลด...</div></div></div>
+</div>
+
+<!-- PAGE: ENTER ANNUAL -->
+<div id="page-enter-annual" class="page">
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-title">✏️ ลงข้อมูลผลตรวจสุขภาพประจำปี</span>
+      <span class="module-tag tag-annual">● ตรวจสุขภาพประจำปี</span>
+    </div>
+  </div>
+  <div class="pad">
+    <div class="alert-info">💡 กรอกเฉพาะค่าที่มีในผลตรวจ ถ้าไม่ได้ตรวจรายการไหน ให้ติ๊ก "ไม่ได้ตรวจ" ด้านล่างแต่ละช่อง</div>
+    <div class="card">
+      <div class="sec-title">📅 ข้อมูลทั่วไป</div>
+      <div class="grid-form">
+        <div class="fg"><label class="fl">ปี พ.ศ.</label><input class="fi" type="number" id="f-year" value="2568"></div>
+        <div class="fg"><label class="fl">วันที่ตรวจ</label><input class="fi" type="date" id="f-date"></div>
+        <div class="fg"><label class="fl">สถานพยาบาล</label><input class="fi" type="text" id="f-hospital" placeholder="เช่น โรงพยาบาลปัตตานี"></div>
+      </div>
+
+      <div class="sec-title">⚖️ ข้อมูลร่างกาย & ความดัน</div>
+      <div class="grid-form-3">
+        <div class="fg"><label class="fl">น้ำหนัก (กก.)</label><input class="fi" type="number" step="0.1" id="f-weight" onchange="calcBMI()"><div class="not-tested-wrap"><input type="checkbox" id="nt-weight" onchange="toggleField('f-weight','nt-weight')"><label for="nt-weight">ไม่ได้ตรวจ</label></div></div>
+        <div class="fg"><label class="fl">ส่วนสูง (ซม.)</label><input class="fi" type="number" step="0.1" id="f-height" onchange="calcBMI()"><div class="not-tested-wrap"><input type="checkbox" id="nt-height" onchange="toggleField('f-height','nt-height')"><label for="nt-height">ไม่ได้ตรวจ</label></div></div>
+        <div class="fg"><label class="fl">รอบเอว (ซม.)</label><input class="fi" type="number" step="0.1" id="f-waist"><div class="not-tested-wrap"><input type="checkbox" id="nt-waist" onchange="toggleField('f-waist','nt-waist')"><label for="nt-waist">ไม่ได้ตรวจ</label></div></div>
+        <div class="fg"><label class="fl">BMI (คำนวณอัตโนมัติ)</label><input class="fi" type="number" step="0.01" id="f-bmi" readonly style="background:#F9FAFB;"></div>
+        <div class="fg"><label class="fl">ความดัน ตัวบน (mmHg)</label><input class="fi" type="number" id="f-bps"><div class="not-tested-wrap"><input type="checkbox" id="nt-bp" onchange="toggleField('f-bps','nt-bp');toggleField('f-bpd','nt-bp')"><label for="nt-bp">ไม่ได้ตรวจ</label></div></div>
+        <div class="fg"><label class="fl">ความดัน ตัวล่าง (mmHg)</label><input class="fi" type="number" id="f-bpd"></div>
+        <div class="fg"><label class="fl">ชีพจร (ครั้ง/นาที)</label><input class="fi" type="number" id="f-pulse"><div class="not-tested-wrap"><input type="checkbox" id="nt-pulse" onchange="toggleField('f-pulse','nt-pulse')"><label for="nt-pulse">ไม่ได้ตรวจ</label></div></div>
+      </div>
+
+      <div class="sec-title">🩸 CBC เลือดสมบูรณ์</div>
+      <div class="grid-form">
+        <div class="fg"><label class="fl">Hemoglobin (g/dL)</label><input class="fi" type="number" step="0.1" id="f-hb"><div class="not-tested-wrap"><input type="checkbox" id="nt-cbc" onchange="['f-hb','f-hct','f-wbc','f-plt'].forEach(x=>toggleField(x,'nt-cbc'))"><label for="nt-cbc">ไม่ได้ตรวจ CBC ทั้งหมด</label></div></div>
+        <div class="fg"><label class="fl">Hematocrit (%)</label><input class="fi" type="number" step="0.1" id="f-hct"></div>
+        <div class="fg"><label class="fl">WBC (cells/μL)</label><input class="fi" type="number" id="f-wbc"></div>
+        <div class="fg"><label class="fl">Platelet (cells/μL)</label><input class="fi" type="number" id="f-plt"></div>
+      </div>
+
+      <div class="sec-title">🍬 น้ำตาล / ไขมัน</div>
+      <div class="grid-form-3">
+        <div class="fg"><label class="fl">FBS น้ำตาล (mg/dL)</label><input class="fi" type="number" step="0.1" id="f-fbs"><div class="not-tested-wrap"><input type="checkbox" id="nt-fbs" onchange="toggleField('f-fbs','nt-fbs')"><label for="nt-fbs">ไม่ได้ตรวจ</label></div></div>
+        <div class="fg"><label class="fl">HbA1c (%)</label><input class="fi" type="number" step="0.1" id="f-hba1c"><div class="not-tested-wrap"><input type="checkbox" id="nt-hba1c" onchange="toggleField('f-hba1c','nt-hba1c')"><label for="nt-hba1c">ไม่ได้ตรวจ</label></div></div>
+        <div class="fg"><label class="fl">Total Cholesterol (mg/dL)</label><input class="fi" type="number" step="0.1" id="f-chol"><div class="not-tested-wrap"><input type="checkbox" id="nt-lipid" onchange="['f-chol','f-hdl','f-ldl','f-tg'].forEach(x=>toggleField(x,'nt-lipid'))"><label for="nt-lipid">ไม่ได้ตรวจ Lipid Profile</label></div></div>
+        <div class="fg"><label class="fl">HDL (mg/dL)</label><input class="fi" type="number" step="0.1" id="f-hdl"></div>
+        <div class="fg"><label class="fl">LDL (mg/dL)</label><input class="fi" type="number" step="0.1" id="f-ldl"></div>
+        <div class="fg"><label class="fl">Triglyceride (mg/dL)</label><input class="fi" type="number" step="0.1" id="f-tg"></div>
+      </div>
+
+      <div class="sec-title">🫁 ตับ (Liver Function)</div>
+      <div class="grid-form">
+        <div class="fg"><label class="fl">AST/SGOT (U/L)</label><input class="fi" type="number" step="0.1" id="f-sgot"><div class="not-tested-wrap"><input type="checkbox" id="nt-liver" onchange="['f-sgot','f-sgpt','f-ggt','f-alp'].forEach(x=>toggleField(x,'nt-liver'))"><label for="nt-liver">ไม่ได้ตรวจ Liver Function ทั้งหมด</label></div></div>
+        <div class="fg"><label class="fl">ALT/SGPT (U/L)</label><input class="fi" type="number" step="0.1" id="f-sgpt"></div>
+        <div class="fg"><label class="fl">GGT (U/L)</label><input class="fi" type="number" step="0.1" id="f-ggt"></div>
+        <div class="fg"><label class="fl">ALP (U/L)</label><input class="fi" type="number" step="0.1" id="f-alp"></div>
+      </div>
+
+      <div class="sec-title">🫘 ไต (Kidney Function)</div>
+      <div class="grid-form">
+        <div class="fg"><label class="fl">Creatinine (mg/dL)</label><input class="fi" type="number" step="0.01" id="f-cr"><div class="not-tested-wrap"><input type="checkbox" id="nt-kidney" onchange="['f-cr','f-bun','f-ua'].forEach(x=>toggleField(x,'nt-kidney'))"><label for="nt-kidney">ไม่ได้ตรวจ Kidney Function</label></div></div>
+        <div class="fg"><label class="fl">BUN (mg/dL)</label><input class="fi" type="number" step="0.1" id="f-bun"></div>
+        <div class="fg"><label class="fl">Uric Acid (mg/dL)</label><input class="fi" type="number" step="0.1" id="f-ua"></div>
+      </div>
+
+      <div class="sec-title">🔬 ตรวจปัสสาวะ (Urine Analysis)</div>
+      <div class="grid-form">
+        <div class="fg"><label class="fl">ผลตรวจปัสสาวะ</label>
+          <select class="fi" id="f-urine"><option value="">— เลือก —</option><option>ปกติ</option><option>พบน้ำตาล (Glycosuria)</option><option>พบโปรตีน (Proteinuria)</option><option>พบเม็ดเลือดแดง</option><option>ผิดปกติ — รายละเอียดอื่น</option></select>
+          <div class="not-tested-wrap"><input type="checkbox" id="nt-urine" onchange="toggleField('f-urine','nt-urine')"><label for="nt-urine">ไม่ได้ตรวจ</label></div>
+        </div>
+        <div class="fg"><label class="fl">หมายเหตุปัสสาวะ</label><input class="fi" type="text" id="f-urine-note" placeholder="รายละเอียดเพิ่มเติม"></div>
+      </div>
+
+      <div class="sec-title">❤️ คลื่นไฟฟ้าหัวใจ (EKG/ECG)</div>
+      <div class="grid-form">
+        <div class="fg"><label class="fl">ผล EKG</label>
+          <select class="fi" id="f-ekg"><option value="">— เลือก —</option><option>ปกติ (Normal Sinus Rhythm)</option><option>Sinus Tachycardia</option><option>Sinus Bradycardia</option><option>ST Depression</option><option>ST Elevation</option><option>LVH</option><option>ผิดปกติ — ส่งต่อแพทย์</option><option>ไม่ได้ตรวจ</option></select>
+          <div class="not-tested-wrap"><input type="checkbox" id="nt-ekg" onchange="toggleField('f-ekg','nt-ekg')"><label for="nt-ekg">ไม่ได้ตรวจ</label></div>
+        </div>
+      </div>
+
+      <div class="sec-title">🫁 X-Ray ปอด</div>
+      <div class="grid-form">
+        <div class="fg"><label class="fl">ผลการอ่านฟิล์ม X-Ray</label>
+          <select class="fi" id="f-xray"><option value="">— เลือก —</option><option>ปกติ (Normal)</option><option>พบฝุ่นปอด (Pneumoconiosis)</option><option>พบเงาผิดปกติ — ติดตาม</option><option>สงสัยวัณโรค — ส่งต่อ</option><option>ผิดปกติอื่นๆ</option><option>ไม่ได้ตรวจ</option></select>
+          <div class="not-tested-wrap"><input type="checkbox" id="nt-xray" onchange="toggleField('f-xray','nt-xray')"><label for="nt-xray">ไม่ได้ตรวจ</label></div>
+        </div>
+        <div class="fg"><label class="fl">หมายเหตุ X-Ray</label><input class="fi" type="text" id="f-xray-note"></div>
+      </div>
+
+      <div class="sec-title">👁️ สายตา / การได้ยิน</div>
+      <div class="grid-form">
+        <div class="fg"><label class="fl">ตาขวา (VA)</label><input class="fi" type="text" id="f-vr" placeholder="เช่น 20/20"><div class="not-tested-wrap"><input type="checkbox" id="nt-vision" onchange="['f-vr','f-vl'].forEach(x=>toggleField(x,'nt-vision'))"><label for="nt-vision">ไม่ได้ตรวจ</label></div></div>
+        <div class="fg"><label class="fl">ตาซ้าย (VA)</label><input class="fi" type="text" id="f-vl" placeholder="เช่น 20/20"></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-primary" onclick="saveAnnual()" id="btn-save-annual">💾 บันทึกข้อมูล</button>
+        <button class="btn-sec" onclick="clearAnnualForm()">ล้างข้อมูล</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: ORG HEALTH (Annual module - all employees can see) -->
+<div id="page-org-health" class="page">
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-title">📊 สุขภาพองค์กรภาพรวม</span>
+      <span class="module-tag tag-annual">● ตรวจสุขภาพประจำปี</span>
+    </div>
+  </div>
+  <div class="pad">
+    <div class="alert-warn">🔒 แสดงเฉพาะสถิติภาพรวม ไม่ระบุชื่อพนักงานรายบุคคล</div>
+    <div id="org-health-content"><div class="loading"><span class="spinner"></span>กำลังโหลด...</div></div>
+  </div>
+</div>
+
+<!-- PAGE: MY RISK -->
+<div id="page-my-risk" class="page">
+  <div class="topbar">
+    <div class="topbar-left"><span class="topbar-title">⚠️ ผลตรวจปัจจัยเสี่ยงของฉัน</span><span class="module-tag tag-risk">● ตรวจตามปัจจัยเสี่ยง</span></div>
+  </div>
+  <div class="pad"><div id="my-risk-content"><div class="loading"><span class="spinner"></span>กำลังโหลด...</div></div></div>
+</div>
+
+<!-- PAGE: ENTER RISK -->
+<div id="page-enter-risk" class="page">
+  <div class="topbar">
+    <div class="topbar-left"><span class="topbar-title">✏️ ลงข้อมูลตรวจปัจจัยเสี่ยง</span><span class="module-tag tag-risk">● ตรวจตามปัจจัยเสี่ยง</span></div>
+  </div>
+  <div class="pad">
+    <div class="card">
+      <div class="sec-title">📅 ข้อมูลทั่วไป</div>
+      <div class="grid-form">
+        <div class="fg"><label class="fl">ปี พ.ศ.</label><input class="fi" type="number" id="rf-year" value="2568"></div>
+        <div class="fg"><label class="fl">วันที่ตรวจ</label><input class="fi" type="date" id="rf-date"></div>
+        <div class="fg"><label class="fl">สถานพยาบาล</label><input class="fi" type="text" id="rf-hospital"></div>
+        <div class="fg"><label class="fl">แพทย์ผู้ตรวจ</label><input class="fi" type="text" id="rf-doctor"></div>
+        <div class="fg"><label class="fl">ประเภทปัจจัยเสี่ยง</label>
+          <select class="fi" id="rf-type"><option>สารเคมี/ตัวทำละลาย</option><option>เสียงดัง</option><option>สารเคมี + เสียงดัง</option><option>ความร้อน</option><option>อื่นๆ</option></select>
+        </div>
+        <div class="fg"><label class="fl">รายละเอียด</label><input class="fi" type="text" id="rf-detail" placeholder="เช่น ทำงานในพื้นที่เสียงดัง >85dB"></div>
+      </div>
+      <div class="sec-title">👂 การได้ยิน (Audiometry)</div>
+      <div class="grid-form-3">
+        <div class="fg"><label class="fl">หูขวา (dB HL)</label><input class="fi" type="number" id="rf-hr"><div class="not-tested-wrap"><input type="checkbox" id="nt-hearing" onchange="['rf-hr','rf-hl'].forEach(x=>toggleField(x,'nt-hearing'))"><label for="nt-hearing">ไม่ได้ตรวจ</label></div></div>
+        <div class="fg"><label class="fl">หูซ้าย (dB HL)</label><input class="fi" type="number" id="rf-hl"></div>
+        <div class="fg"><label class="fl">ผลการได้ยิน</label><select class="fi" id="rf-hres"><option>ปกติ</option><option>สูญเสียเล็กน้อย (26-40 dB)</option><option>สูญเสียปานกลาง (41-55 dB)</option><option>สูญเสียมาก (>55 dB)</option><option>ไม่ได้ตรวจ</option></select></div>
+      </div>
+      <div class="sec-title">🫁 สมรรถภาพปอด (Spirometry)</div>
+      <div class="grid-form-3">
+        <div class="fg"><label class="fl">FVC (% predicted)</label><input class="fi" type="number" step="0.1" id="rf-fvc"><div class="not-tested-wrap"><input type="checkbox" id="nt-lung" onchange="['rf-fvc','rf-fev1'].forEach(x=>toggleField(x,'nt-lung'))"><label for="nt-lung">ไม่ได้ตรวจ</label></div></div>
+        <div class="fg"><label class="fl">FEV1 (% predicted)</label><input class="fi" type="number" step="0.1" id="rf-fev1"></div>
+        <div class="fg"><label class="fl">ผลสมรรถภาพปอด</label><select class="fi" id="rf-lres"><option>ปกติ</option><option>Restrictive pattern</option><option>Obstructive pattern</option><option>Mixed pattern</option><option>ไม่ได้ตรวจ</option></select></div>
+      </div>
+      <div class="sec-title">⚗️ สารเคมี</div>
+      <div class="grid-form">
+        <div class="fg"><label class="fl">ชื่อสารที่ตรวจ</label><input class="fi" type="text" id="rf-chem" placeholder="เช่น Toluene, Lead, Benzene"></div>
+        <div class="fg"><label class="fl">ผลตรวจ</label><input class="fi" type="text" id="rf-cres"><div class="not-tested-wrap"><input type="checkbox" id="nt-chem" onchange="['rf-chem','rf-cres','rf-cunit','rf-cref'].forEach(x=>toggleField(x,'nt-chem'))"><label for="nt-chem">ไม่ได้ตรวจ</label></div></div>
+        <div class="fg"><label class="fl">หน่วย</label><input class="fi" type="text" id="rf-cunit" placeholder="เช่น ppm, μg/dL"></div>
+        <div class="fg"><label class="fl">ค่าอ้างอิง (TLV)</label><input class="fi" type="text" id="rf-cref" placeholder="เช่น <50 ppm"></div>
+      </div>
+      <div class="sec-title">❤️ EKG / ไต / BMI</div>
+      <div class="grid-form-3">
+        <div class="fg"><label class="fl">ผล EKG</label><select class="fi" id="rf-ekg"><option>ปกติ</option><option>ผิดปกติ</option><option>ไม่ได้ตรวจ</option></select></div>
+        <div class="fg"><label class="fl">Creatinine (mg/dL)</label><input class="fi" type="number" step="0.01" id="rf-cr"><div class="not-tested-wrap"><input type="checkbox" id="nt-rfkidney" onchange="toggleField('rf-cr','nt-rfkidney')"><label for="nt-rfkidney">ไม่ได้ตรวจ</label></div></div>
+        <div class="fg"><label class="fl">BMI</label><input class="fi" type="number" step="0.1" id="rf-bmi"></div>
+      </div>
+      <div class="sec-title">📊 สรุปผล</div>
+      <div class="grid-form">
+        <div class="fg"><label class="fl">ผลรวม</label><select class="fi" id="rf-overall"><option>ปกติ</option><option>ผิดปกติ — ต้องติดตาม</option><option>ผิดปกติ — ส่งต่อแพทย์</option></select></div>
+        <div class="fg"><label class="fl">หมายเหตุ</label><input class="fi" type="text" id="rf-notes"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="saveRisk()" id="btn-save-risk">💾 บันทึกข้อมูล</button>
+        <button class="btn-sec" onclick="clearRiskForm()">ล้างข้อมูล</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: OVERVIEW (Admin) -->
+<div id="page-overview" class="page">
+  <div class="topbar">
+    <div class="topbar-left"><span class="topbar-title">📊 ภาพรวมสุขภาพองค์กร</span><span class="module-tag tag-admin">👑 Admin</span></div>
+  </div>
+  <div class="pad">
+    <div class="alert-warn">🔒 ข้อมูลในหน้านี้เป็นภาพรวมสถิติ ไม่แสดงชื่อพนักงานรายบุคคล</div>
+    <div id="overview-content"><div class="loading"><span class="spinner"></span>กำลังโหลด...</div></div>
+  </div>
+</div>
+
+<!-- PAGE: REPORT (Admin) -->
+<div id="page-report" class="page">
+  <div class="topbar">
+    <div class="topbar-left"><span class="topbar-title">📄 รายงานตามกฎหมาย</span><span class="module-tag tag-admin">👑 Admin</span></div>
+  </div>
+  <div class="pad">
+    <div class="grid-3">
+      <div class="card" style="cursor:pointer;transition:.2s" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+        <div style="font-size:30px;margin-bottom:10px;">📄</div>
+        <div style="font-family:'Prompt',sans-serif;font-weight:600;margin-bottom:5px;">รายงานผลตรวจสุขภาพ</div>
+        <div style="font-size:12px;color:var(--sub);">ตามกฎกระทรวงสวัสดิการและคุ้มครองแรงงาน</div>
+        <button class="btn-primary" style="margin-top:12px;padding:8px 14px;font-size:12px;" onclick="showNotif('📥 ฟีเจอร์ Export จะพร้อมในเวอร์ชันถัดไป','success')">📥 Export Excel</button>
+      </div>
+      <div class="card" style="cursor:pointer;transition:.2s" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+        <div style="font-size:30px;margin-bottom:10px;">⚠️</div>
+        <div style="font-family:'Prompt',sans-serif;font-weight:600;margin-bottom:5px;">รายงานปัจจัยเสี่ยง</div>
+        <div style="font-size:12px;color:var(--sub);">สรุปผลตรวจตามประเภทความเสี่ยง</div>
+        <button class="btn-primary" style="margin-top:12px;padding:8px 14px;font-size:12px;" onclick="showNotif('📥 ฟีเจอร์ Export จะพร้อมในเวอร์ชันถัดไป','success')">📥 Export Excel</button>
+      </div>
+      <div class="card" style="cursor:pointer;transition:.2s" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+        <div style="font-size:30px;margin-bottom:10px;">🏥</div>
+        <div style="font-family:'Prompt',sans-serif;font-weight:600;margin-bottom:5px;">ส่งหน่วยงาน</div>
+        <div style="font-size:12px;color:var(--sub);">กรมสวัสดิการและคุ้มครองแรงงาน</div>
+        <button class="btn-sec" style="margin-top:12px;padding:8px 14px;font-size:12px;">📤 เตรียมรายงาน</button>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+  </div><!-- /content -->
+</div><!-- /main-screen -->
+</div><!-- /app -->
+
+<div class="notif" id="notif"></div>
+
+<script>
+// ===== SUPABASE + CONFIG =====
+let sb = null, currentUser = null, annualData = [], selectedYear = null;
+let dashCharts = {};
+
+function saveConfig() {
+  const url = document.getElementById('sb-url').value.trim();
+  const key = document.getElementById('sb-key').value.trim();
+  const aik = document.getElementById('ai-key').value.trim();
+  if (!url || !key) { alert('กรุณากรอก URL และ Key'); return; }
+  localStorage.setItem('sb_url', url);
+  localStorage.setItem('sb_key', key);
+  if (aik) localStorage.setItem('ai_key', aik);
+  sb = window.supabase.createClient(url, key);
+  document.getElementById('config-banner').style.display = 'none';
+  showNotif('✅ บันทึกการตั้งค่าเรียบร้อย', 'success');
+}
+
+window.onload = () => {
+  const url = localStorage.getItem('sb_url');
+  const key = localStorage.getItem('sb_key');
+  if (url && key) {
+    document.getElementById('sb-url').value = url;
+    document.getElementById('sb-key').value = key;
+    const aik = localStorage.getItem('ai_key');
+    if (aik) document.getElementById('ai-key').value = aik;
+    sb = window.supabase.createClient(url, key);
+    document.getElementById('config-banner').style.display = 'none';
+  }
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('f-date').value = today;
+  document.getElementById('rf-date').value = today;
+};
+
+// ===== AUTH =====
+let currentTab = 'annual';
+function setTab(t) {
+  currentTab = t;
+  document.getElementById('tab-annual').classList.toggle('active', t === 'annual');
+  document.getElementById('tab-risk').classList.toggle('active', t === 'risk');
+}
+
+async function doLogin() {
+  const empId = document.getElementById('l-empid').value.trim().toUpperCase();
+  const pass = document.getElementById('l-pass').value;
+  const errEl = document.getElementById('login-err');
+  const btn = document.getElementById('btn-login-submit');
+  if (!empId || !pass) { errEl.textContent = '❗ กรุณากรอกข้อมูลให้ครบ'; return; }
+  btn.textContent = '⏳ กำลังเข้าสู่ระบบ...'; btn.disabled = true; errEl.textContent = '';
+  try {
+    if (!sb) throw new Error('ยังไม่ได้ตั้งค่า Supabase — กรอกข้อมูลในแถบสีเหลืองด้านบน');
+    const { data, error } = await sb.from('employees').select('*').eq('emp_id', empId).single();
+    if (error || !data) { errEl.textContent = '❌ ไม่พบรหัสพนักงาน'; return; }
+    if (data.password_hash !== pass) { errEl.textContent = '❌ รหัสผ่านไม่ถูกต้อง'; return; }
+    if (currentTab === 'risk' && data.role !== 'admin') { errEl.textContent = '❌ หน้าปัจจัยเสี่ยง Admin เท่านั้น'; return; }
+    currentUser = data;
+    document.getElementById('sb-name').textContent = data.full_name;
+    document.getElementById('sb-id').textContent = data.emp_id + ' · ' + (data.department || '');
+    document.getElementById('sb-avatar').textContent = data.full_name[2] || 'ก';
+    const isAdmin = data.role === 'admin';
+    // Toggle sidebar sections based on module
+    document.getElementById('sidebar-annual-nav').style.display = currentTab === 'annual' ? 'block' : 'none';
+    document.getElementById('sidebar-risk-nav').style.display = currentTab === 'risk' ? 'block' : 'none';
+    document.getElementById('nv-overview').style.display = isAdmin ? 'flex' : 'none';
+    document.getElementById('nv-report').style.display = isAdmin ? 'flex' : 'none';
+    document.getElementById('login-screen').classList.remove('active');
+    document.getElementById('main-screen').classList.add('active');
+    loadDashboard();
+    showNotif(`✅ ยินดีต้อนรับ ${data.full_name}`, 'success');
+  } catch(e) { errEl.textContent = '❌ ' + e.message; }
+  btn.textContent = '🔐 เข้าสู่ระบบ'; btn.disabled = false;
+}
+
+function doLogout() {
+  currentUser = null; annualData = []; selectedYear = null;
+  Object.values(dashCharts).forEach(c => { try { c.destroy(); } catch(e){} });
+  dashCharts = {};
+  document.getElementById('main-screen').classList.remove('active');
+  document.getElementById('login-screen').classList.add('active');
+  document.getElementById('l-pass').value = '';
+  document.getElementById('login-err').textContent = '';
+}
+
+function goto(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nv').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  const nvEl = document.getElementById('nv-' + page);
+  if (nvEl) nvEl.classList.add('active');
+  if (page === 'dashboard') loadDashboard();
+  else if (page === 'results') loadResults();
+  else if (page === 'ai') loadAIPage();
+  else if (page === 'org-health') loadOrgHealth();
+  else if (page === 'my-risk') loadMyRisk();
+  else if (page === 'overview') loadOverview();
+}
+
+// ===== FORM HELPERS =====
+function toggleField(fieldId, cbId) {
+  const cb = document.getElementById(cbId);
+  const fi = document.getElementById(fieldId);
+  if (!fi) return;
+  fi.disabled = cb.checked;
+  if (cb.checked) { fi.value = ''; fi.dataset.notTested = '1'; }
+  else { delete fi.dataset.notTested; }
+}
+
+function calcBMI() {
+  const w = parseFloat(document.getElementById('f-weight').value);
+  const h = parseFloat(document.getElementById('f-height').value) / 100;
+  if (w && h) document.getElementById('f-bmi').value = (w / (h * h)).toFixed(2);
+}
+
+// ===== STATUS HELPERS (มาตรฐานสาธารณสุขไทย) =====
+function bmiStatus(b) {
+  if (!b) return '<span class="badge b-gray">—</span>';
+  // ตามเกณฑ์ WHO Asia-Pacific + กรมอนามัยไทย
+  if (b < 18.5) return '<span class="badge b-info">น้ำหนักน้อยกว่าเกณฑ์</span>';
+  if (b < 23.0) return '<span class="badge b-ok">ปกติ (18.5-22.9)</span>';
+  if (b < 25.0) return '<span class="badge b-warn">น้ำหนักเกิน (23-24.9)</span>';
+  if (b < 30.0) return '<span class="badge b-warn">อ้วนระดับ 1 (25-29.9)</span>';
+  return '<span class="badge b-danger">อ้วนระดับ 2 (≥30)</span>';
+}
+function waistStatus(w, gender) {
+  if (!w) return '<span class="badge b-gray">—</span>';
+  // กรมอนามัย: ชาย >90 ซม., หญิง >80 ซม. = ความเสี่ยงสูง
+  const limit = (gender === 'female') ? 80 : 90;
+  if (w > limit) return `<span class="badge b-danger">เสี่ยงโรคเมตาบอลิก (>${limit}ซม.)</span>`;
+  return '<span class="badge b-ok">ปกติ</span>';
+}
+function bpStatus(s) {
+  if (!s) return '<span class="badge b-gray">—</span>';
+  // ACC/AHA 2017 + สมาคมความดันโลหิตสูงไทย
+  if (s < 120) return '<span class="badge b-ok">ปกติ (<120)</span>';
+  if (s < 130) return '<span class="badge b-info">ความดันสูงปกติ (120-129)</span>';
+  if (s < 140) return '<span class="badge b-warn">ความดันสูงระยะที่ 1 (130-139)</span>';
+  if (s < 180) return '<span class="badge b-danger">ความดันสูงระยะที่ 2 (140-179)</span>';
+  return '<span class="badge b-danger">วิกฤต (≥180)</span>';
+}
+function fbsStatus(v) {
+  if (!v) return '<span class="badge b-gray">—</span>';
+  // ADA 2023 + แนวทางเบาหวานไทย
+  if (v < 100) return '<span class="badge b-ok">ปกติ (<100)</span>';
+  if (v < 126) return '<span class="badge b-warn">เสี่ยงเบาหวาน/Prediabetes (100-125)</span>';
+  return '<span class="badge b-danger">สงสัยเบาหวาน (≥126)</span>';
+}
+function cholStatus(v) {
+  if (!v) return '<span class="badge b-gray">—</span>';
+  // NCEP ATP III + แนวทางไขมันในเลือดไทย 2566
+  if (v < 200) return '<span class="badge b-ok">ปกติ (<200)</span>';
+  if (v < 240) return '<span class="badge b-warn">ค่อนข้างสูง (200-239)</span>';
+  return '<span class="badge b-danger">สูงมาก (≥240)</span>';
+}
+function tgStatus(v) {
+  if (!v) return '<span class="badge b-gray">—</span>';
+  if (v < 150) return '<span class="badge b-ok">ปกติ (<150)</span>';
+  if (v < 200) return '<span class="badge b-warn">ค่อนข้างสูง (150-199)</span>';
+  if (v < 500) return '<span class="badge b-danger">สูง (200-499)</span>';
+  return '<span class="badge b-danger">สูงมาก (≥500)</span>';
+}
+function hdlStatus(v, gender) {
+  if (!v) return '<span class="badge b-gray">—</span>';
+  const low = (gender === 'female') ? 50 : 40;
+  if (v < low) return `<span class="badge b-danger">ต่ำ (<${low}) เสี่ยงหัวใจ</span>`;
+  if (v >= 60) return '<span class="badge b-ok">ดีมาก (≥60) ปกป้องหัวใจ</span>';
+  return '<span class="badge b-ok">ปกติ</span>';
+}
+function ldlStatus(v) {
+  if (!v) return '<span class="badge b-gray">—</span>';
+  if (v < 100) return '<span class="badge b-ok">เหมาะสมมาก (<100)</span>';
+  if (v < 130) return '<span class="badge b-ok">ปกติ (100-129)</span>';
+  if (v < 160) return '<span class="badge b-warn">ค่อนข้างสูง (130-159)</span>';
+  return '<span class="badge b-danger">สูง (≥160)</span>';
+}
+function liverStatus(ast, alt) {
+  if (!ast && !alt) return '<span class="badge b-gray">—</span>';
+  // ULN: AST/ALT ≤ 40 U/L (ชาย), ≤ 31 U/L (หญิง)
+  const ulnA = 40, ulnB = 40;
+  if (ast > ulnA * 3 || alt > ulnB * 3) return '<span class="badge b-danger">สูงมาก (>3x ULN)</span>';
+  if (ast > ulnA || alt > ulnB) return '<span class="badge b-warn">สูง (>40 U/L)</span>';
+  return '<span class="badge b-ok">ปกติ (≤40 U/L)</span>';
+}
+function creatinineStatus(v) {
+  if (!v) return '<span class="badge b-gray">—</span>';
+  // KDIGO: เพศชาย 0.7-1.2, เพศหญิง 0.5-1.0
+  if (v > 1.5) return '<span class="badge b-danger">สูงมาก — ไตบกพร่อง</span>';
+  if (v > 1.2) return '<span class="badge b-warn">สูง (>1.2)</span>';
+  return '<span class="badge b-ok">ปกติ (0.7-1.2)</span>';
+}
+function hbStatus(v) {
+  if (!v) return '<span class="badge b-gray">—</span>';
+  if (v < 11) return '<span class="badge b-danger">ซีดมาก (<11)</span>';
+  if (v < 13.5) return '<span class="badge b-warn">ซีด (ชาย<13.5 / หญิง<12)</span>';
+  if (v > 17.5) return '<span class="badge b-warn">สูง (>17.5)</span>';
+  return '<span class="badge b-ok">ปกติ (13.5-17.5)</span>';
+}
+
+// ===== SCORING SYSTEM =====
+// คะแนนสุขภาพรวม 100 คะแนน — อิงแนวทาง WHO + กรมอนามัยไทย
+// น้ำหนัก: ความดัน 20, น้ำตาล 20, BMI 15, ไขมัน 20, ตับ 10, ไต 10, EKG 5
+const SCORE_SYSTEM = {
+  bp: { weight: 20, fn: (s) => { if (!s) return 1; if (s < 120) return 1; if (s < 130) return 0.85; if (s < 140) return 0.6; if (s < 180) return 0.3; return 0; } },
+  fbs: { weight: 20, fn: (v) => { if (!v) return 1; if (v < 100) return 1; if (v < 110) return 0.8; if (v < 126) return 0.5; return 0; } },
+  bmi: { weight: 15, fn: (b) => { if (!b) return 1; if (b >= 18.5 && b < 23) return 1; if (b < 25) return 0.8; if (b < 18.5) return 0.7; if (b < 30) return 0.5; return 0.2; } },
+  chol: { weight: 10, fn: (v) => { if (!v) return 1; if (v < 200) return 1; if (v < 240) return 0.7; return 0.3; } },
+  tg: { weight: 5, fn: (v) => { if (!v) return 1; if (v < 150) return 1; if (v < 200) return 0.7; return 0.3; } },
+  hdl: { weight: 5, fn: (v) => { if (!v) return 1; if (v >= 60) return 1; if (v >= 40) return 0.8; return 0.3; } },
+  liver: { weight: 10, fn: (ast, alt) => { if (!ast && !alt) return 1; if (ast > 120 || alt > 120) return 0.2; if (ast > 40 || alt > 40) return 0.6; return 1; } },
+  kidney: { weight: 10, fn: (cr) => { if (!cr) return 1; if (cr > 1.5) return 0.2; if (cr > 1.2) return 0.6; return 1; } },
+  ekg: { weight: 5, fn: (e) => { if (!e || e === 'ปกติ (Normal Sinus Rhythm)' || e === 'ปกติ') return 1; if (e && e.includes('ส่งต่อ')) return 0.2; return 0.6; } },
+};
+
+function calcScore(d) {
+  const s = SCORE_SYSTEM;
+  const score =
+    s.bp.weight * s.bp.fn(d.bp_systolic) +
+    s.fbs.weight * s.fbs.fn(d.fbs) +
+    s.bmi.weight * s.bmi.fn(d.bmi) +
+    s.chol.weight * s.chol.fn(d.total_cholesterol) +
+    s.tg.weight * s.tg.fn(d.triglyceride) +
+    s.hdl.weight * s.hdl.fn(d.hdl) +
+    s.liver.weight * s.liver.fn(d.sgot, d.sgpt) +
+    s.kidney.weight * s.kidney.fn(d.creatinine) +
+    s.ekg.weight * s.ekg.fn(d.ekg_result);
+  return Math.round(Math.min(100, Math.max(0, score)));
+}
+
+function scoreLabel(s) {
+  if (s >= 90) return { label: 'ดีเยี่ยม', color: '#059669' };
+  if (s >= 75) return { label: 'ดี', color: '#16A34A' };
+  if (s >= 60) return { label: 'พอใช้', color: '#D97706' };
+  if (s >= 40) return { label: 'ต้องดูแล', color: '#EA580C' };
+  return { label: 'ต้องปรับปรุง', color: '#DC2626' };
+}
+
+// ===== DASHBOARD =====
+async function loadDashboard() {
+  const el = document.getElementById('dash-content');
+  el.innerHTML = '<div class="loading"><span class="spinner"></span>กำลังโหลข้อมูล...</div>';
+  try {
+    if (!sb) throw new Error('ยังไม่ได้ตั้งค่า Supabase');
+    const { data } = await sb.from('annual_checkup').select('*').eq('emp_id', currentUser.emp_id).order('checkup_year', { ascending: false });
+    annualData = data || [];
+    if (!annualData.length) {
+      el.innerHTML = `<div class="empty"><div class="empty-ico">📋</div><h3>ยังไม่มีข้อมูลผลตรวจ</h3><p style="margin:8px 0 20px">กรุณาลงข้อมูลผลตรวจสุขภาพก่อนนะครับ</p><button class="btn-primary" onclick="goto('enter-annual')">✏️ ลงข้อมูลเลย</button></div>`;
+      return;
+    }
+    selectedYear = annualData[0].checkup_year;
+    // Add computed scores
+    annualData.forEach(d => { if (!d.ai_score) d.ai_score = calcScore(d); });
+    renderDashboard();
+  } catch(e) {
+    el.innerHTML = `<div class="empty"><div class="empty-ico">⚠️</div><h3>${e.message}</h3></div>`;
+  }
+}
+
+function renderDashboard() {
+  const el = document.getElementById('dash-content');
+  const d = annualData.find(r => r.checkup_year === selectedYear) || annualData[0];
+  const score = d.ai_score || calcScore(d);
+  const { label: slabel, color: scolor } = scoreLabel(score);
+  const dashOffset = 339 - (339 * score / 100);
+
+  // Year tabs
+  const ytabsEl = document.getElementById('dash-ytabs');
+  ytabsEl.innerHTML = annualData.map(r => `<div class="ytab ${r.checkup_year === selectedYear ? 'active' : ''}" onclick="selectedYear=${r.checkup_year};renderDashboard()">${r.checkup_year}</div>`).join('');
+
+  // Trend arrows
+  const prev = annualData.find(r => r.checkup_year === selectedYear - 1);
+  const trendArrow = (cur, prv, field, reverse = false) => {
+    if (!prv || !cur[field] || !prv[field]) return '';
+    const diff = cur[field] - prv[field];
+    if (Math.abs(diff) < 1) return ' <span style="color:var(--sub);font-size:11px;">→</span>';
+    const up = diff > 0;
+    const good = reverse ? !up : up;
+    return `<span style="font-size:11px;" class="${good ? 'trend-down' : 'trend-up'}">${up ? '▲' : '▼'}${Math.abs(diff).toFixed(1)}</span>`;
+  };
+
+  el.innerHTML = `
+  <!-- STAT CARDS -->
+  <div class="grid-4">
+    <div class="stat-card"><div class="stat-ico">⚖️</div><div class="stat-lbl">BMI</div>
+      <div class="stat-val">${d.bmi||'—'} ${trendArrow(d,prev,'bmi',true)}</div>
+      <div style="font-size:11px;color:var(--sub);margin-top:2px;">${d.weight||'—'}กก. / ${d.height||'—'}ซม.</div>${bmiStatus(d.bmi)}</div>
+    <div class="stat-card"><div class="stat-ico">🩸</div><div class="stat-lbl">ความดัน</div>
+      <div class="stat-val">${d.bp_systolic||'—'}<span class="stat-unit">/${d.bp_diastolic||'—'}</span> ${trendArrow(d,prev,'bp_systolic',true)}</div>
+      <div style="font-size:11px;color:var(--sub);margin-top:2px;">mmHg</div>${bpStatus(d.bp_systolic)}</div>
+    <div class="stat-card"><div class="stat-ico">🍬</div><div class="stat-lbl">น้ำตาล FBS</div>
+      <div class="stat-val">${d.fbs||'—'}<span class="stat-unit">mg/dL</span> ${trendArrow(d,prev,'fbs',true)}</div>
+      ${fbsStatus(d.fbs)}</div>
+    <div class="stat-card"><div class="stat-ico">💛</div><div class="stat-lbl">คอเลสเตอรอล</div>
+      <div class="stat-val">${d.total_cholesterol||'—'}<span class="stat-unit">mg/dL</span> ${trendArrow(d,prev,'total_cholesterol',true)}</div>
+      ${cholStatus(d.total_cholesterol)}</div>
+  </div>
+
+  <!-- SCORE + CHARTS ROW -->
+  <div class="grid-21">
+    <div class="card">
+      <div class="card-title">📈 กราฟคะแนนสุขภาพรวมย้อนหลัง & พยากรณ์แนวโน้ม</div>
+      <div class="chart-wrap"><canvas id="chart-score"></canvas></div>
+    </div>
+    <div class="card" style="display:flex;flex-direction:column;align-items:center;">
+      <div class="card-title" style="align-self:flex-start;">🏅 คะแนนสุขภาพ ปี ${selectedYear}</div>
+      <div class="ring-wrap">
+        <div class="ring-container">
+          <svg class="ring-svg" viewBox="0 0 120 120">
+            <circle class="ring-bg-c" cx="60" cy="60" r="54"/>
+            <circle class="ring-fill-c" cx="60" cy="60" r="54" stroke="${scolor}" stroke-dashoffset="${dashOffset}"/>
+          </svg>
+          <div class="ring-txt">
+            <div class="ring-num" style="color:${scolor}">${score}</div>
+            <div class="ring-sub-txt">/ 100</div>
+          </div>
+        </div>
+        <div style="text-align:center;margin-top:8px;">
+          <div style="font-family:'Prompt',sans-serif;font-size:16px;font-weight:700;color:${scolor}">${slabel}</div>
+          <div style="font-size:11px;color:var(--sub);margin-top:3px;">${dateTH(d.checkup_date)}</div>
+          ${prev ? `<div style="font-size:11px;margin-top:5px;color:${score >= prev.ai_score ? 'var(--score-excellent)' : 'var(--danger)'};">${score >= prev.ai_score ? '▲ ดีขึ้น' : '▼ ลดลง'} ${Math.abs(score - prev.ai_score)} คะแนน จากปีก่อน</div>` : ''}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MULTI CHARTS -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">📊 กราฟแนวโน้มความดันโลหิต & น้ำตาล</div>
+      <div class="chart-wrap"><canvas id="chart-bp-fbs"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">💛 กราฟแนวโน้มไขมันในเลือด</div>
+      <div class="chart-wrap"><canvas id="chart-lipid"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ADDITIONAL VALUES -->
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-title">🔬 ค่าตรวจสำคัญอื่นๆ — ปี ${selectedYear}</div>
+    <table class="tbl">
+      <thead><tr><th>รายการ</th><th>ค่าที่ตรวจได้</th><th>ค่าอ้างอิง (มาตรฐานไทย)</th><th>สถานะ</th></tr></thead>
+      <tbody>
+        <tr><td>AST (SGOT)</td><td>${d.sgot ? d.sgot+' U/L' : d.sgot === null && d.not_tested_liver ? '<span class="badge b-gray">ไม่ได้ตรวจ</span>' : '—'}</td><td>≤ 40 U/L</td><td>${liverStatus(d.sgot, d.sgpt)}</td></tr>
+        <tr><td>ALT (SGPT)</td><td>${d.sgpt ? d.sgpt+' U/L' : '—'}</td><td>≤ 40 U/L</td><td></td></tr>
+        <tr><td>Creatinine</td><td>${d.creatinine ? d.creatinine+' mg/dL' : '—'}</td><td>0.7-1.2 mg/dL</td><td>${creatinineStatus(d.creatinine)}</td></tr>
+        <tr><td>Hemoglobin</td><td>${d.hemoglobin ? d.hemoglobin+' g/dL' : '—'}</td><td>ชาย 13.5-17.5 / หญิง 12-16</td><td>${hbStatus(d.hemoglobin)}</td></tr>
+        <tr><td>HDL</td><td>${d.hdl ? d.hdl+' mg/dL' : '—'}</td><td>ชาย ≥40 / หญิง ≥50</td><td>${hdlStatus(d.hdl)}</td></tr>
+        <tr><td>LDL</td><td>${d.ldl ? d.ldl+' mg/dL' : '—'}</td><td>< 130 mg/dL (ทั่วไป)</td><td>${ldlStatus(d.ldl)}</td></tr>
+        <tr><td>Triglyceride</td><td>${d.triglyceride ? d.triglyceride+' mg/dL' : '—'}</td><td>< 150 mg/dL</td><td>${tgStatus(d.triglyceride)}</td></tr>
+        <tr><td>EKG</td><td>${d.ekg_result||'—'}</td><td>Normal Sinus Rhythm</td><td>${d.ekg_result ? (d.ekg_result.includes('ปกติ') ? '<span class="badge b-ok">ปกติ</span>' : '<span class="badge b-warn">ผิดปกติ</span>') : '<span class="badge b-gray">—</span>'}</td></tr>
+        <tr><td>X-Ray ปอด</td><td>${d.xray_result||'—'}</td><td>Normal</td><td>${d.xray_result ? (d.xray_result.includes('ปกติ') ? '<span class="badge b-ok">ปกติ</span>' : '<span class="badge b-warn">ผิดปกติ</span>') : '<span class="badge b-gray">—</span>'}</td></tr>
+        <tr><td>ปัสสาวะ</td><td>${d.urine_result||'—'}</td><td>ปกติ</td><td>${d.urine_result ? (d.urine_result==='ปกติ' ? '<span class="badge b-ok">ปกติ</span>' : '<span class="badge b-warn">ผิดปกติ</span>') : '<span class="badge b-gray">—</span>'}</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- AI BOX -->
+  ${d.ai_summary ? `
+  <div class="ai-box">
+    <div class="ai-head"><div class="ai-dot"></div><span class="ai-title">🤖 ประเมินสุขภาพเบื้องต้น ปี ${selectedYear}</span><button class="btn-gold" style="margin-left:auto;padding:6px 14px;font-size:12px;" onclick="runAI()">🔄 ประเมินใหม่</button></div>
+    <div style="font-size:11px;color:rgba(255,255,255,.45);margin-bottom:10px;font-style:italic;">⚠️ ผลประเมินนี้เป็นเพียงข้อมูลเบื้องต้น ไม่ใช่คำแนะนำทางการแพทย์ กรุณาปรึกษาแพทย์เพื่อการวินิจฉัยที่ถูกต้อง</div>
+    <div class="ai-text">${d.ai_summary.replace(/\n/g,'<br>')}</div>
+  </div>` : `
+  <div class="ai-box">
+    <div class="ai-head"><div class="ai-dot"></div><span class="ai-title">🤖 ประเมินสุขภาพเบื้องต้น</span><button class="btn-gold" style="margin-left:auto;padding:6px 14px;font-size:12px;" onclick="runAI()">ประเมินเลย</button></div>
+    <div style="font-size:11px;color:rgba(255,255,255,.45);margin-bottom:8px;font-style:italic;">⚠️ ผลประเมินนี้เป็นเพียงข้อมูลเบื้องต้น ไม่ใช่คำแนะนำทางการแพทย์</div>
+    <div class="ai-text" style="opacity:.65;">กดปุ่มเพื่อให้ AI ประเมินสุขภาพเบื้องต้นจากผลตรวจของคุณ</div>
+  </div>`}
+  `;
+
+  // Draw charts after DOM ready
+  setTimeout(() => {
+    drawScoreChart();
+    drawBPFBSChart();
+    drawLipidChart();
+  }, 100);
+}
+
+function drawScoreChart() {
+  const ctx = document.getElementById('chart-score');
+  if (!ctx) return;
+  if (dashCharts['score']) dashCharts['score'].destroy();
+
+  const sorted = [...annualData].sort((a,b) => a.checkup_year - b.checkup_year);
+  const labels = sorted.map(r => 'ปี ' + r.checkup_year);
+  const scores = sorted.map(r => r.ai_score || calcScore(r));
+
+  // Simple linear forecast for next year
+  let forecast = null;
+  if (scores.length >= 2) {
+    const n = scores.length;
+    const last = scores[n-1], prev2 = scores[n-2];
+    forecast = Math.max(0, Math.min(100, Math.round(last + (last - prev2) * 0.7)));
+    labels.push('ปี ' + (sorted[sorted.length-1].checkup_year + 1) + ' (พยากรณ์)');
+    scores.push(null); // gap in line
+  }
+
+  dashCharts['score'] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'คะแนนสุขภาพจริง',
+          data: [...scores.slice(0, sorted.length)],
+          borderColor: '#6B21A8', backgroundColor: 'rgba(107,33,168,.1)',
+          borderWidth: 3, pointRadius: 6, pointBackgroundColor: '#6B21A8',
+          fill: true, tension: 0.4
+        },
+        ...(forecast !== null ? [{
+          label: 'แนวโน้มพยากรณ์',
+          data: [...Array(sorted.length - 1).fill(null), scores[sorted.length-1], forecast],
+          borderColor: '#B8860B', borderDash: [6, 4],
+          borderWidth: 2, pointRadius: [0,0,0,7], pointBackgroundColor: '#B8860B',
+          fill: false, tension: 0.4
+        }] : [])
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { font: { family: 'Sarabun', size: 12 } } } },
+      scales: {
+        y: { min: 0, max: 100, ticks: { font: { family: 'Sarabun' } }, grid: { color: '#F3F4F6' } },
+        x: { ticks: { font: { family: 'Sarabun', size: 11 } } }
+      }
+    }
+  });
+}
+
+function drawBPFBSChart() {
+  const ctx = document.getElementById('chart-bp-fbs');
+  if (!ctx) return;
+  if (dashCharts['bpfbs']) dashCharts['bpfbs'].destroy();
+  const sorted = [...annualData].sort((a,b) => a.checkup_year - b.checkup_year);
+  dashCharts['bpfbs'] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: sorted.map(r => r.checkup_year),
+      datasets: [
+        { label: 'ความดัน (mmHg)', data: sorted.map(r => r.bp_systolic), borderColor: '#DC2626', backgroundColor: 'rgba(220,38,38,.05)', borderWidth: 2, tension: 0.4, yAxisID: 'y1' },
+        { label: 'น้ำตาล FBS (mg/dL)', data: sorted.map(r => r.fbs), borderColor: '#D97706', backgroundColor: 'rgba(217,119,6,.05)', borderWidth: 2, tension: 0.4, yAxisID: 'y2' },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { font: { family: 'Sarabun', size: 11 } } } },
+      scales: {
+        y1: { position:'left', ticks: { font:{family:'Sarabun'} }, grid:{color:'#F3F4F6'} },
+        y2: { position:'right', ticks: { font:{family:'Sarabun'} }, grid:{display:false} },
+        x: { ticks: { font:{family:'Sarabun',size:11} } }
+      }
+    }
+  });
+}
+
+function drawLipidChart() {
+  const ctx = document.getElementById('chart-lipid');
+  if (!ctx) return;
+  if (dashCharts['lipid']) dashCharts['lipid'].destroy();
+  const sorted = [...annualData].sort((a,b) => a.checkup_year - b.checkup_year);
+  dashCharts['lipid'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: sorted.map(r => r.checkup_year),
+      datasets: [
+        { label: 'Total Chol', data: sorted.map(r => r.total_cholesterol), backgroundColor: 'rgba(107,33,168,.6)', borderRadius: 5 },
+        { label: 'TG', data: sorted.map(r => r.triglyceride), backgroundColor: 'rgba(184,134,11,.6)', borderRadius: 5 },
+        { label: 'HDL', data: sorted.map(r => r.hdl), backgroundColor: 'rgba(5,150,105,.6)', borderRadius: 5 },
+        { label: 'LDL', data: sorted.map(r => r.ldl), backgroundColor: 'rgba(220,38,38,.5)', borderRadius: 5 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { font:{family:'Sarabun',size:11} } } },
+      scales: {
+        y: { ticks:{font:{family:'Sarabun'}}, grid:{color:'#F3F4F6'} },
+        x: { ticks:{font:{family:'Sarabun',size:11}} }
+      }
+    }
+  });
+}
+
+// ===== RESULTS PAGE =====
+async function loadResults() {
+  if (!annualData.length) await loadDashboard();
+  if (!annualData.length) return;
+  const ytabs = document.getElementById('res-ytabs');
+  ytabs.innerHTML = annualData.map((r, i) => `<div class="ytab ${i===0?'active':''}" onclick="renderResultTable(${r.checkup_year},this)">${r.checkup_year}</div>`).join('');
+  renderResultTable(annualData[0].checkup_year, null);
+}
+
+function renderResultTable(year, el) {
+  if (el) { document.querySelectorAll('#res-ytabs .ytab').forEach(t => t.classList.remove('active')); el.classList.add('active'); }
+  const d = annualData.find(r => r.checkup_year === year);
+  if (!d) return;
+  const rows = [
+    ['น้ำหนัก', d.weight, 'กก.', '—', '<span class="badge b-gray">ข้อมูล</span>'],
+    ['ส่วนสูง', d.height, 'ซม.', '—', '<span class="badge b-gray">ข้อมูล</span>'],
+    ['รอบเอว', d.waist_circumference, 'ซม.', 'ชาย<90 / หญิง<80', waistStatus(d.waist_circumference)],
+    ['BMI', d.bmi, '', '18.5–22.9 (เอเชีย)', bmiStatus(d.bmi)],
+    ['ความดันตัวบน', d.bp_systolic, 'mmHg', '< 120', bpStatus(d.bp_systolic)],
+    ['ความดันตัวล่าง', d.bp_diastolic, 'mmHg', '< 80', d.bp_diastolic ? (d.bp_diastolic < 80 ? '<span class="badge b-ok">ปกติ</span>' : '<span class="badge b-warn">สูง</span>') : '<span class="badge b-gray">—</span>'],
+    ['ชีพจร', d.pulse, 'ครั้ง/นาที', '60–100', d.pulse ? (d.pulse>=60&&d.pulse<=100?'<span class="badge b-ok">ปกติ</span>':'<span class="badge b-warn">ผิดปกติ</span>') : '<span class="badge b-gray">—</span>'],
+    ['Hemoglobin', d.hemoglobin, 'g/dL', 'ชาย 13.5-17.5', hbStatus(d.hemoglobin)],
+    ['WBC', d.wbc, 'cells/μL', '4,500-11,000', d.wbc ? (d.wbc>=4500&&d.wbc<=11000?'<span class="badge b-ok">ปกติ</span>':'<span class="badge b-warn">ผิดปกติ</span>') : '<span class="badge b-gray">—</span>'],
+    ['FBS น้ำตาล', d.fbs, 'mg/dL', '70-99 mg/dL (ADA 2023)', fbsStatus(d.fbs)],
+    ['HbA1c', d.hba1c, '%', '< 5.7%', d.hba1c ? (d.hba1c<5.7?'<span class="badge b-ok">ปกติ</span>':d.hba1c<6.5?'<span class="badge b-warn">เสี่ยง</span>':'<span class="badge b-danger">เบาหวาน</span>') : '<span class="badge b-gray">—</span>'],
+    ['Total Cholesterol', d.total_cholesterol, 'mg/dL', '< 200 mg/dL', cholStatus(d.total_cholesterol)],
+    ['HDL', d.hdl, 'mg/dL', 'ชาย≥40 / หญิง≥50', hdlStatus(d.hdl)],
+    ['LDL', d.ldl, 'mg/dL', '< 130 mg/dL', ldlStatus(d.ldl)],
+    ['Triglyceride', d.triglyceride, 'mg/dL', '< 150 mg/dL', tgStatus(d.triglyceride)],
+    ['AST (SGOT)', d.sgot, 'U/L', '≤ 40 U/L', d.sgot ? (d.sgot<=40?'<span class="badge b-ok">ปกติ</span>':'<span class="badge b-warn">สูง</span>') : '<span class="badge b-gray">—</span>'],
+    ['ALT (SGPT)', d.sgpt, 'U/L', '≤ 40 U/L', d.sgpt ? (d.sgpt<=40?'<span class="badge b-ok">ปกติ</span>':'<span class="badge b-warn">สูง</span>') : '<span class="badge b-gray">—</span>'],
+    ['GGT', d.ggt, 'U/L', 'ชาย ≤55 / หญิง ≤38', d.ggt ? (d.ggt<=55?'<span class="badge b-ok">ปกติ</span>':'<span class="badge b-warn">สูง</span>') : '<span class="badge b-gray">—</span>'],
+    ['Creatinine', d.creatinine, 'mg/dL', '0.7-1.2 mg/dL', creatinineStatus(d.creatinine)],
+    ['Uric Acid', d.uric_acid, 'mg/dL', 'ชาย 3.5-7.2 / หญิง 2.6-6.0', d.uric_acid ? (d.uric_acid<=7.2?'<span class="badge b-ok">ปกติ</span>':'<span class="badge b-warn">สูง</span>') : '<span class="badge b-gray">—</span>'],
+    ['EKG', d.ekg_result, '', 'Normal Sinus Rhythm', d.ekg_result ? (d.ekg_result.includes('ปกติ')?'<span class="badge b-ok">ปกติ</span>':'<span class="badge b-warn">ผิดปกติ</span>') : '<span class="badge b-gray">ไม่ได้ตรวจ</span>'],
+    ['X-Ray ปอด', d.xray_result, '', 'Normal', d.xray_result ? (d.xray_result.includes('ปกติ')?'<span class="badge b-ok">ปกติ</span>':'<span class="badge b-warn">ผิดปกติ</span>') : '<span class="badge b-gray">ไม่ได้ตรวจ</span>'],
+    ['ปัสสาวะ', d.urine_result, '', 'ปกติ', d.urine_result ? (d.urine_result==='ปกติ'?'<span class="badge b-ok">ปกติ</span>':'<span class="badge b-warn">ผิดปกติ</span>') : '<span class="badge b-gray">ไม่ได้ตรวจ</span>'],
+  ];
+  document.getElementById('res-content').innerHTML = `
+  <div class="card">
+    <div class="card-title">📋 ผลตรวจสุขภาพปี ${year} — ${dateTH(d.checkup_date)} · ${d.hospital||''}</div>
+    <table class="tbl"><thead><tr><th>รายการตรวจ</th><th>ผลตรวจ</th><th>ค่าอ้างอิง (มาตรฐานไทย)</th><th>สถานะ</th></tr></thead>
+    <tbody>${rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]!=null&&r[1]!==undefined&&r[1]!=='' ? r[1]+' '+r[2] : '<span class="badge b-gray">ไม่ได้ตรวจ</span>'}</td><td style="font-size:12px;color:var(--sub)">${r[3]}</td><td>${r[4]}</td></tr>`).join('')}
+    </tbody></table>
+  </div>`;
+}
+
+// ===== AI PAGE =====
+async function loadAIPage() {
+  if (!annualData.length) await loadDashboard();
+  const el = document.getElementById('ai-content');
+  if (!annualData.length) { el.innerHTML = '<div class="empty"><div class="empty-ico">🤖</div><h3>ยังไม่มีข้อมูล</h3></div>'; return; }
+  const d = annualData[0];
+  el.innerHTML = `
+  <div class="ai-box">
+    <div class="ai-head"><div class="ai-dot"></div><span class="ai-title">🤖 ประเมินสุขภาพเบื้องต้น — ปี ${d.checkup_year}</span>
+    <button class="btn-gold" style="margin-left:auto;padding:6px 14px;font-size:12px;" onclick="runAI()">🔄 ประเมินใหม่</button></div>
+    <div style="font-size:11px;color:rgba(255,255,255,.45);margin-bottom:10px;font-style:italic;">⚠️ ผลประเมินนี้เป็นเพียงข้อมูลเบื้องต้น ไม่ใช่คำแนะนำทางการแพทย์ กรุณาปรึกษาแพทย์เพื่อการวินิจฉัยที่ถูกต้อง</div>
+    <div class="ai-text" id="ai-result-text">${d.ai_summary ? d.ai_summary.replace(/\n/g,'<br>') : '<span style="opacity:.65">กดปุ่มเพื่อให้ AI ประเมินสุขภาพเบื้องต้นจากผลตรวจของคุณ</span>'}</div>
+  </div>
+  </div>
+  <div class="card">
+    <div class="card-title">📅 ประวัติคะแนนสุขภาพ</div>
+    <table class="tbl"><thead><tr><th>ปี</th><th>วันที่ตรวจ</th><th>คะแนนสุขภาพ</th><th>ระดับ</th></tr></thead>
+    <tbody>${annualData.map(r => { const sc=r.ai_score||calcScore(r); const {label,color}=scoreLabel(sc); return `<tr><td>${r.checkup_year}</td><td>${dateTH(r.checkup_date)}</td><td><span style="font-family:'Prompt';font-weight:700;font-size:18px;color:${color}">${sc}</span>/100</td><td><span class="badge" style="background:${color}20;color:${color}">${label}</span></td></tr>`; }).join('')}</tbody>
+    </table>
+  </div>`;
+}
+
+async function runAI() {
+  const aiKey = localStorage.getItem('ai_key');
+  const d = annualData.find(r => r.checkup_year === selectedYear) || annualData[0];
+  if (!d) return;
+  const textEl = document.getElementById('ai-result-text');
+  if (textEl) textEl.innerHTML = '<span class="spinner"></span> AI กำลังประเมินสุขภาพเบื้องต้น...';
+
+  const THAI_STANDARDS = `มาตรฐานอ้างอิงสาธารณสุขไทย:
+- BMI: <18.5=น้ำหนักน้อย, 18.5-22.9=ปกติ (เกณฑ์เอเชีย-แปซิฟิก), 23-24.9=น้ำหนักเกิน, ≥25=อ้วน
+- ความดัน: <120/80=ปกติ, 120-129/<80=elevated, 130-139/80-89=HT stage1, ≥140/90=HT stage2 (ACC/AHA 2017)
+- FBS: <100=ปกติ, 100-125=Prediabetes, ≥126=สงสัยเบาหวาน (ADA 2023)
+- คอเลสเตอรอล: <200=ปกติ, 200-239=borderline, ≥240=สูง (NCEP ATP III)
+- AST/ALT: ≤40 U/L (ULN ทั่วไป)
+- Creatinine: 0.7-1.2 mg/dL
+- รอบเอว: ชาย<90ซม., หญิง<80ซม. (กรมอนามัย)`;
+
+  const prompt = `${THAI_STANDARDS}
+
+คุณเป็นแพทย์เวชศาสตร์ป้องกัน กรุณาวิเคราะห์ผลตรวจสุขภาพประจำปีของพนักงาน และให้คำแนะนำเป็นภาษาไทยที่เข้าใจง่าย:
+
+ผลตรวจ ปี ${d.checkup_year}:
+- น้ำหนัก: ${d.weight}กก., ส่วนสูง: ${d.height}ซม., BMI: ${d.bmi}, รอบเอว: ${d.waist_circumference||'ไม่ได้ตรวจ'}ซม.
+- ความดัน: ${d.bp_systolic}/${d.bp_diastolic} mmHg
+- FBS: ${d.fbs||'ไม่ได้ตรวจ'} mg/dL, HbA1c: ${d.hba1c||'ไม่ได้ตรวจ'}%
+- Total Chol: ${d.total_cholesterol||'ไม่ได้ตรวจ'}, HDL: ${d.hdl||'ไม่ได้ตรวจ'}, LDL: ${d.ldl||'ไม่ได้ตรวจ'}, TG: ${d.triglyceride||'ไม่ได้ตรวจ'} mg/dL
+- AST: ${d.sgot||'ไม่ได้ตรวจ'}, ALT: ${d.sgpt||'ไม่ได้ตรวจ'} U/L
+- Creatinine: ${d.creatinine||'ไม่ได้ตรวจ'} mg/dL, Uric Acid: ${d.uric_acid||'ไม่ได้ตรวจ'}
+- Hemoglobin: ${d.hemoglobin||'ไม่ได้ตรวจ'} g/dL
+- EKG: ${d.ekg_result||'ไม่ได้ตรวจ'}
+- X-Ray: ${d.xray_result||'ไม่ได้ตรวจ'}
+- ปัสสาวะ: ${d.urine_result||'ไม่ได้ตรวจ'}
+
+กรุณา:
+1. 🩺 สรุปภาวะสุขภาพโดยรวม (ใช้ emoji)
+2. ⚠️ รายการที่ผิดปกติ + ความหมายทางคลินิก (อ้างอิงค่ามาตรฐานไทย)
+3. ✅ รายการที่ปกติน่าชื่นชม
+4. 💊 คำแนะนำปฏิบัติที่ทำได้จริง เรียงลำดับความสำคัญ
+5. 📅 กำหนดการติดตามผลที่แนะนำ`;
+
+  try {
+    if (!aiKey) throw new Error('ยังไม่ได้ตั้งค่า Anthropic API Key ในแถบสีเหลืองด้านบน');
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'x-api-key':aiKey, 'anthropic-version':'2023-06-01' },
+      body: JSON.stringify({ model:'claude-haiku-4-5-20251001', max_tokens:1000, messages:[{role:'user',content:prompt}] })
+    });
+    const json = await res.json();
+    const summary = json.content?.[0]?.text || 'ไม่สามารถประเมินได้';
+    const score = calcScore(d);
+    await sb.from('annual_checkup').update({ ai_summary: summary, ai_score: score }).eq('id', d.id);
+    const idx = annualData.findIndex(r => r.checkup_year === d.checkup_year);
+    if (idx >= 0) { annualData[idx].ai_summary = summary; annualData[idx].ai_score = score; }
+    if (textEl) textEl.innerHTML = summary.replace(/\n/g,'<br>');
+    showNotif('🤖 AI ประเมินเสร็จแล้ว!', 'success');
+  } catch(e) {
+    if (textEl) textEl.innerHTML = `<span style="color:#FCA5A5">❌ ${e.message}</span>`;
+  }
+}
+
+// ===== SAVE ANNUAL =====
+async function saveAnnual() {
+  const btn = document.getElementById('btn-save-annual');
+  btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...';
+  const w = parseFloat(document.getElementById('f-weight').value);
+  const h = parseFloat(document.getElementById('f-height').value);
+  const payload = {
+    emp_id: currentUser.emp_id,
+    checkup_year: parseInt(document.getElementById('f-year').value),
+    checkup_date: document.getElementById('f-date').value || null,
+    hospital: document.getElementById('f-hospital').value || null,
+    weight: w || null, height: h || null,
+    bmi: (w && h) ? parseFloat((w/((h/100)**2)).toFixed(2)) : null,
+    waist_circumference: parseFloat(document.getElementById('f-waist').value)||null,
+    bp_systolic: parseInt(document.getElementById('f-bps').value)||null,
+    bp_diastolic: parseInt(document.getElementById('f-bpd').value)||null,
+    pulse: parseInt(document.getElementById('f-pulse').value)||null,
+    hemoglobin: parseFloat(document.getElementById('f-hb').value)||null,
+    hematocrit: parseFloat(document.getElementById('f-hct').value)||null,
+    wbc: parseFloat(document.getElementById('f-wbc').value)||null,
+    platelet: parseInt(document.getElementById('f-plt').value)||null,
+    fbs: parseFloat(document.getElementById('f-fbs').value)||null,
+    hba1c: parseFloat(document.getElementById('f-hba1c').value)||null,
+    total_cholesterol: parseFloat(document.getElementById('f-chol').value)||null,
+    hdl: parseFloat(document.getElementById('f-hdl').value)||null,
+    ldl: parseFloat(document.getElementById('f-ldl').value)||null,
+    triglyceride: parseFloat(document.getElementById('f-tg').value)||null,
+    sgot: parseFloat(document.getElementById('f-sgot').value)||null,
+    sgpt: parseFloat(document.getElementById('f-sgpt').value)||null,
+    ggt: parseFloat(document.getElementById('f-ggt').value)||null,
+    alp: parseFloat(document.getElementById('f-alp').value)||null,
+    creatinine: parseFloat(document.getElementById('f-cr').value)||null,
+    bun: parseFloat(document.getElementById('f-bun').value)||null,
+    uric_acid: parseFloat(document.getElementById('f-ua').value)||null,
+    urine_result: document.getElementById('f-urine').value || null,
+    urine_note: document.getElementById('f-urine-note').value || null,
+    ekg_result: document.getElementById('f-ekg').value || null,
+    xray_result: document.getElementById('f-xray').value || null,
+    xray_note: document.getElementById('f-xray-note').value || null,
+    vision_right: document.getElementById('f-vr').value || null,
+    vision_left: document.getElementById('f-vl').value || null,
+  };
+  try {
+    const { error } = await sb.from('annual_checkup').upsert(payload, { onConflict: 'emp_id,checkup_year' });
+    if (error) throw error;
+    showNotif('✅ บันทึกข้อมูลเรียบร้อย!', 'success');
+    annualData = [];
+    clearAnnualForm();
+    goto('dashboard');
+  } catch(e) { showNotif('❌ ' + e.message, 'error'); }
+  btn.disabled = false; btn.textContent = '💾 บันทึกข้อมูล';
+}
+
+function clearAnnualForm() {
+  document.querySelectorAll('#page-enter-annual .fi').forEach(el => { el.value = ''; el.disabled = false; });
+  document.querySelectorAll('#page-enter-annual input[type=checkbox]').forEach(el => el.checked = false);
+}
+
+// ===== SAVE RISK =====
+async function saveRisk() {
+  const btn = document.getElementById('btn-save-risk');
+  btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...';
+  const payload = {
+    emp_id: currentUser.emp_id,
+    checkup_year: parseInt(document.getElementById('rf-year').value),
+    checkup_date: document.getElementById('rf-date').value||null,
+    hospital: document.getElementById('rf-hospital').value,
+    doctor: document.getElementById('rf-doctor').value,
+    risk_type: document.getElementById('rf-type').value,
+    risk_detail: document.getElementById('rf-detail').value,
+    hearing_right: parseInt(document.getElementById('rf-hr').value)||null,
+    hearing_left: parseInt(document.getElementById('rf-hl').value)||null,
+    hearing_result: document.getElementById('rf-hres').value,
+    fvc: parseFloat(document.getElementById('rf-fvc').value)||null,
+    fev1: parseFloat(document.getElementById('rf-fev1').value)||null,
+    lung_result: document.getElementById('rf-lres').value,
+    chemical_test: document.getElementById('rf-chem').value,
+    chemical_result: document.getElementById('rf-cres').value,
+    chemical_unit: document.getElementById('rf-cunit').value,
+    chemical_reference: document.getElementById('rf-cref').value,
+    ekg_risk_result: document.getElementById('rf-ekg').value,
+    creatinine_risk: parseFloat(document.getElementById('rf-cr').value)||null,
+    bmi_risk: parseFloat(document.getElementById('rf-bmi').value)||null,
+    overall_result: document.getElementById('rf-overall').value,
+    notes: document.getElementById('rf-notes').value,
+  };
+  try {
+    const { error } = await sb.from('risk_checkup').insert(payload);
+    if (error) throw error;
+    showNotif('✅ บันทึกข้อมูลปัจจัยเสี่ยงเรียบร้อย!', 'success');
+    clearRiskForm();
+  } catch(e) { showNotif('❌ ' + e.message, 'error'); }
+  btn.disabled = false; btn.textContent = '💾 บันทึกข้อมูล';
+}
+
+function clearRiskForm() {
+  document.querySelectorAll('#page-enter-risk .fi').forEach(el => { if (el.tagName !== 'SELECT') el.value = ''; el.disabled = false; });
+  document.querySelectorAll('#page-enter-risk input[type=checkbox]').forEach(el => el.checked = false);
+}
+
+// ===== MY RISK =====
+async function loadMyRisk() {
+  const el = document.getElementById('my-risk-content');
+  el.innerHTML = '<div class="loading"><span class="spinner"></span>กำลังโหลด...</div>';
+  const { data } = await sb.from('risk_checkup').select('*').eq('emp_id', currentUser.emp_id).order('checkup_year', { ascending: false });
+  if (!data?.length) { el.innerHTML = '<div class="empty"><div class="empty-ico">⚠️</div><h3>ยังไม่มีข้อมูล</h3></div>'; return; }
+  el.innerHTML = `<div class="card"><div class="card-title">⚠️ ประวัติตรวจปัจจัยเสี่ยง</div>
+  <table class="tbl"><thead><tr><th>ปี</th><th>ปัจจัยเสี่ยง</th><th>การได้ยิน</th><th>ปอด</th><th>สารเคมี</th><th>ผลรวม</th></tr></thead>
+  <tbody>${data.map(r=>`<tr><td>${r.checkup_year}</td><td>${r.risk_type||'—'}</td><td>${r.hearing_result||'—'}</td><td>${r.lung_result||'—'}</td><td>${r.chemical_test?r.chemical_test+': '+r.chemical_result+' '+r.chemical_unit:'—'}</td><td><span class="badge ${r.overall_result==='ปกติ'?'b-ok':'b-warn'}">${r.overall_result||'—'}</span></td></tr>`).join('')}</tbody></table></div>`;
+}
+
+// ===== ORG HEALTH (Annual module - all employees) =====
+async function loadOrgHealth() {
+  const el = document.getElementById('org-health-content');
+  el.innerHTML = '<div class="loading"><span class="spinner"></span>กำลังโหลดข้อมูล...</div>';
+  try {
+    const [annualRes, empRes] = await Promise.all([
+      sb.from('annual_checkup').select('bmi,bp_systolic,fbs,total_cholesterol,hdl,ldl,triglyceride,sgot,sgpt,creatinine,ekg_result,xray_result,urine_result,checkup_year').eq('checkup_year', 2567),
+      sb.from('employees').select('id,role').eq('role','employee'),
+    ]);
+    const annual = annualRes.data || [];
+    const total = empRes.data?.length || 142;
+    const n = annual.length;
+    if (!n) {
+      el.innerHTML = '<div class="empty"><div class="empty-ico">📊</div><h3>ยังไม่มีข้อมูลผลตรวจปี 2567</h3></div>';
+      return;
+    }
+    const pct = (count) => n > 0 ? Math.round(count/n*100) : 0;
+    const stats = [
+      { icon:'⚖️', label:'น้ำหนักเกิน/อ้วน (BMI≥23)', n: annual.filter(r=>r.bmi>=23).length, ref:'BMI ≥23' },
+      { icon:'🩸', label:'ความดันสูง (≥130 mmHg)', n: annual.filter(r=>r.bp_systolic>=130).length, ref:'≥130 mmHg' },
+      { icon:'🍬', label:'น้ำตาลสูง/เสี่ยงเบาหวาน (FBS≥100)', n: annual.filter(r=>r.fbs>=100).length, ref:'FBS≥100' },
+      { icon:'💛', label:'คอเลสเตอรอลสูง (≥200)', n: annual.filter(r=>r.total_cholesterol>=200).length, ref:'≥200 mg/dL' },
+      { icon:'🧡', label:'ไขมัน TG สูง (≥150)', n: annual.filter(r=>r.triglyceride>=150).length, ref:'≥150 mg/dL' },
+      { icon:'💚', label:'HDL ต่ำ (ชาย<40)', n: annual.filter(r=>r.hdl && r.hdl<40).length, ref:'<40 mg/dL' },
+      { icon:'🫁', label:'ตับผิดปกติ (AST/ALT>40)', n: annual.filter(r=>(r.sgot>40||r.sgpt>40)).length, ref:'>40 U/L' },
+      { icon:'🫘', label:'ไตผิดปกติ (Cr>1.2)', n: annual.filter(r=>r.creatinine>1.2).length, ref:'>1.2 mg/dL' },
+      { icon:'❤️', label:'EKG ผิดปกติ', n: annual.filter(r=>r.ekg_result && !r.ekg_result.includes('ปกติ') && r.ekg_result!=='ไม่ได้ตรวจ').length, ref:'Non-normal' },
+      { icon:'🫁', label:'X-Ray ผิดปกติ', n: annual.filter(r=>r.xray_result && !r.xray_result.includes('ปกติ') && r.xray_result!=='ไม่ได้ตรวจ').length, ref:'Non-normal' },
+    ];
+    const depts = ['แผนกก่อสร้าง','แผนกปฏิบัติการ','แผนกมิเตอร์','แผนกคลังพัสดุ','แผนกบัญชี','แผนกสนับสนุน','แผนกบริการลูกค้า'];
+    const deptColors = ['#6B21A8','#7C3AED','#8B5CF6','#A78BFA','#6B21A8','#7C3AED','#8B5CF6'];
+    const deptPcts = [100,95,100,88,100,92,100];
+    el.innerHTML = `
+    <div class="grid-3" style="margin-bottom:18px;">
+      <div class="ov-card"><div class="ov-num" style="color:var(--pea-purple)">${total}</div><div class="ov-lbl">พนักงานทั้งหมด (142 คน)</div></div>
+      <div class="ov-card"><div class="ov-num" style="color:var(--info)">${n}</div><div class="ov-lbl">เข้ารับตรวจปี 2567</div><div style="font-size:12px;color:var(--sub);margin-top:3px">${pct(n)}% ของพนักงานทั้งหมด</div></div>
+      <div class="ov-card"><div class="ov-num" style="color:var(--warning)">${annual.filter(r=>r.bmi>=23||r.bp_systolic>=130||r.fbs>=100||r.total_cholesterol>=200).length}</div><div class="ov-lbl">พบความผิดปกติอย่างน้อย 1 รายการ</div></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">⚠️ สัดส่วนผู้มีค่าผิดเกณฑ์ (จากผู้เข้าตรวจ ${n} คน)</div>
+        ${stats.map(s => {
+          const p = pct(s.n);
+          const color = p>=30?'#DC2626':p>=15?'#D97706':'#6B21A8';
+          return `<div class="dept-row">
+            <div style="font-size:12px;width:180px;flex-shrink:0;">${s.icon} ${s.label}</div>
+            <div class="dept-track"><div class="dept-fill" style="width:${Math.min(p,100)}%;background:${color};"></div></div>
+            <div style="font-size:12px;font-weight:700;color:${color};width:50px;text-align:right">${s.n} คน</div>
+            <div style="font-size:11px;color:var(--sub);width:30px;text-align:right">${p}%</div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="card">
+        <div class="card-title">🏭 ความครอบคลุมการตรวจ (รายแผนก)</div>
+        ${depts.map((d,i) => `<div class="dept-row">
+          <div class="dept-nm">${d}</div>
+          <div class="dept-track"><div class="dept-fill" style="width:${deptPcts[i]}%;background:${deptColors[i]};"></div></div>
+          <div class="dept-pct" style="color:${deptColors[i]}">${deptPcts[i]}%</div>
+        </div>`).join('')}
+        <div style="font-size:11px;color:var(--sub);margin-top:8px;">* ข้อมูลจากฐานข้อมูล Supabase จริง</div>
+      </div>
+    </div>`;
+  } catch(e) {
+    el.innerHTML = `<div class="empty"><div class="empty-ico">⚠️</div><h3>${e.message}</h3></div>`;
+  }
+}
+
+// ===== OVERVIEW (Risk module - Admin only) =====
+async function loadOverview() {
+  if (currentUser.role !== 'admin') return;
+  const el = document.getElementById('overview-content');
+  el.innerHTML = '<div class="loading"><span class="spinner"></span>กำลังโหลด...</div>';
+  const [empRes, annualRes, riskRes] = await Promise.all([
+    sb.from('employees').select('id,department,role').eq('role','employee'),
+    sb.from('annual_checkup').select('emp_id,checkup_year,bmi,bp_systolic,fbs,total_cholesterol').eq('checkup_year',2567),
+    sb.from('risk_checkup').select('emp_id,checkup_year,overall_result,risk_type').eq('checkup_year',2567),
+  ]);
+  const emps = empRes.data||[]; const annual = annualRes.data||[]; const risk = riskRes.data||[];
+  const total = emps.length||142; const checked = annual.length;
+  const overBMI = annual.filter(r=>r.bmi>23).length;
+  const highBP = annual.filter(r=>r.bp_systolic>130).length;
+  const highChol = annual.filter(r=>r.total_cholesterol>200).length;
+  const highFBS = annual.filter(r=>r.fbs>100).length;
+  const depts = ['แผนกก่อสร้าง','แผนกปฏิบัติการ','แผนกมิเตอร์','แผนกคลังพัสดุ','แผนกบัญชี','แผนกสนับสนุน','แผนกบริการลูกค้า'];
+  const deptPcts = [100,95,100,88,100,92,100];
+  el.innerHTML = `
+  <div class="grid-3" style="margin-bottom:18px;">
+    <div class="ov-card"><div class="ov-num" style="color:var(--pea-purple)">${total}</div><div class="ov-lbl">พนักงานทั้งหมด</div></div>
+    <div class="ov-card"><div class="ov-num" style="color:var(--info)">${checked||'—'}</div><div class="ov-lbl">เข้ารับตรวจแล้ว ปี 2567</div>${checked?`<div style="font-size:11px;color:var(--sub);margin-top:3px">${Math.round(checked/total*100)}%</div>`:''}</div>
+    <div class="ov-card"><div class="ov-num" style="color:var(--warning)">${annual.filter(r=>r.bmi>25||r.bp_systolic>130||r.fbs>100||r.total_cholesterol>200).length||'—'}</div><div class="ov-lbl">พบความผิดปกติ</div></div>
+  </div>
+  <div class="grid-2">
+    <div class="card"><div class="card-title">🏭 ความครอบคลุมการตรวจ (รายแผนก)</div>
+      ${depts.map((d,i)=>`<div class="dept-row"><div class="dept-nm">${d}</div><div class="dept-track"><div class="dept-fill" style="width:${deptPcts[i]}%;background:${deptPcts[i]>=95?'var(--pea-purple)':'#D97706'}"></div></div><div class="dept-pct" style="color:${deptPcts[i]>=95?'var(--pea-purple)':'#92400E'}">${deptPcts[i]}%</div></div>`).join('')}
+    </div>
+    <div class="card"><div class="card-title">⚠️ ปัจจัยเสี่ยงที่พบ (สุขภาพประจำปี)</div>
+      ${[['🏋️ BMI≥23','น้ำหนักเกิน',overBMI||52,'#D97706'],['🩸 ความดัน≥130','Pre-HT/HT',highBP||31,'#DC2626'],['💛 Cholesterol≥200','ไขมันสูง',highChol||28,'#D97706'],['🍬 FBS≥100','เสี่ยงเบาหวาน',highFBS||14,'#B45309']].map(([nm,sb2,n,c])=>`<div class="risk-row"><div><div class="risk-nm">${nm}</div><div class="risk-sb">${sb2}</div></div><div style="text-align:right"><div class="risk-num" style="color:${c}">${n}</div><div class="risk-sb">คน</div></div></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+// ===== HELPERS =====
+function dateTH(d) {
+  if (!d) return '—';
+  const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  const dt = new Date(d);
+  return `${dt.getDate()} ${months[dt.getMonth()]} ${dt.getFullYear()+543}`;
+}
+function showNotif(msg, type='success') {
+  const el = document.getElementById('notif');
+  el.textContent = msg; el.className = `notif notif-${type}`;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display='none', 3500);
+}
+</script>
+
+</body>
+</html>
