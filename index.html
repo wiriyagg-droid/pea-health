@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PEA Pattani Smart Health AI</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@400;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root {
@@ -251,6 +251,38 @@ background:linear-gradient(180deg, var(–pea-purple-dark) 0%, #1E1B4B 100%);
 .risk-nm { font-size:13px; font-weight:500; }
 .risk-sb { font-size:11px; color:var(–sub); margin-top:1px; }
 .risk-num { font-family:‘Prompt’,sans-serif; font-size:20px; font-weight:800; }
+
+/* ===== MODAL ===== */
+.modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:500; display:flex; align-items:center; justify-content:center; animation:fadeIn .2s ease; }
+.modal { background:white; border-radius:18px; padding:28px; width:520px; max-width:95vw; max-height:88vh; overflow-y:auto; box-shadow:0 25px 60px rgba(0,0,0,.25); position:relative; }
+.modal-title { font-family:‘Prompt’,sans-serif; font-size:16px; font-weight:700; color:var(–pea-purple-dark); margin-bottom:18px; display:flex; align-items:center; gap:9px; }
+.modal-close { position:absolute; top:18px; right:18px; background:var(–bg); border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; color:var(–sub); }
+.modal-close:hover { background:var(–border); }
+
+/* ===== ADMIN TABS ===== */
+.admin-tabs { display:flex; gap:6px; margin-bottom:20px; flex-wrap:wrap; }
+.admin-tab { padding:8px 16px; border-radius:22px; border:1px solid var(–border); background:white; color:var(–sub); font-family:‘Sarabun’,sans-serif; font-size:13px; cursor:pointer; transition:.2s; }
+.admin-tab.active { background:var(–pea-purple); border-color:var(–pea-purple); color:white; font-weight:600; }
+
+/* ===== EMPLOYEE TABLE ===== */
+.emp-table { width:100%; border-collapse:collapse; font-size:13px; }
+.emp-table th { background:var(–bg); padding:9px 12px; text-align:left; font-size:11px; font-weight:700; color:var(–sub); text-transform:uppercase; letter-spacing:.4px; border-bottom:1px solid var(–border); white-space:nowrap; }
+.emp-table td { padding:10px 12px; border-bottom:1px solid var(–border); vertical-align:middle; }
+.emp-table tr:hover td { background:#FAFAFA; }
+.btn-xs { padding:4px 10px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; border:none; font-family:‘Sarabun’,sans-serif; transition:.2s; }
+.btn-edit { background:#EDE9FE; color:#5B21B6; }
+.btn-edit:hover { background:#DDD6FE; }
+.btn-reset { background:#FEF3C7; color:#92400E; }
+.btn-reset:hover { background:#FDE68A; }
+.btn-del { background:#FEE2E2; color:#B91C1C; }
+.btn-del:hover { background:#FECACA; }
+
+/* ===== RISK DASHBOARD ===== */
+.risk-stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:18px; }
+.risk-stat-card { background:var(–card); border:1px solid var(–border); border-radius:12px; padding:14px; }
+.risk-stat-ico { font-size:22px; margin-bottom:6px; }
+.risk-stat-lbl { font-size:11px; color:var(–sub); font-weight:500; }
+.risk-stat-val { font-family:‘Prompt’,sans-serif; font-size:20px; font-weight:700; margin-top:3px; }
 </style>
 
 </head>
@@ -350,10 +382,12 @@ background:linear-gradient(180deg, var(–pea-purple-dark) 0%, #1E1B4B 100%);
 
 <div class="nav-sec" id="sidebar-risk-nav" style="display:none">
   <div class="nav-lbl">ตรวจตามปัจจัยเสี่ยง</div>
-  <div class="nv" id="nv-my-risk" onclick="goto('my-risk')"><span class="ic">⚠️</span>ผลตรวจของฉัน</div>
+  <div class="nv" id="nv-risk-dash" onclick="goto('risk-dash')"><span class="ic">🏠</span>แดชบอร์ดของฉัน</div>
+  <div class="nv" id="nv-my-risk" onclick="goto('my-risk')"><span class="ic">📋</span>ผลตรวจของฉัน</div>
   <div class="nv" id="nv-enter-risk" onclick="goto('enter-risk')"><span class="ic">✏️</span>ลงข้อมูลผลตรวจ</div>
   <div class="nv" id="nv-overview" onclick="goto('overview')" style="display:none"><span class="ic">📈</span>ภาพรวมองค์กร</div>
   <div class="nv" id="nv-report" onclick="goto('report')" style="display:none"><span class="ic">📄</span>รายงานตามกฎหมาย</div>
+  <div class="nv" id="nv-admin" onclick="goto('admin')" style="display:none"><span class="ic">👑</span>จัดการระบบ (Admin)</div>
 </div>
 
 <div class="sb-user">
@@ -544,10 +578,6 @@ background:linear-gradient(180deg, var(–pea-purple-dark) 0%, #1E1B4B 100%);
         <div class="fg"><label class="fl">วันที่ตรวจ</label><input class="fi" type="date" id="rf-date"></div>
         <div class="fg"><label class="fl">สถานพยาบาล</label><input class="fi" type="text" id="rf-hospital"></div>
         <div class="fg"><label class="fl">แพทย์ผู้ตรวจ</label><input class="fi" type="text" id="rf-doctor"></div>
-        <div class="fg"><label class="fl">ประเภทปัจจัยเสี่ยง</label>
-          <select class="fi" id="rf-type"><option>สารเคมี/ตัวทำละลาย</option><option>เสียงดัง</option><option>สารเคมี + เสียงดัง</option><option>ความร้อน</option><option>อื่นๆ</option></select>
-        </div>
-        <div class="fg"><label class="fl">รายละเอียด</label><input class="fi" type="text" id="rf-detail" placeholder="เช่น ทำงานในพื้นที่เสียงดัง >85dB"></div>
       </div>
       <div class="sec-title">👂 การได้ยิน (Audiometry)</div>
       <div class="grid-form-3">
@@ -626,6 +656,48 @@ background:linear-gradient(180deg, var(–pea-purple-dark) 0%, #1E1B4B 100%);
     </div>
   </div>
 </div>
+
+<!-- PAGE: RISK DASHBOARD -->
+<div id="page-risk-dash" class="page">
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-title">🏠 แดชบอร์ดปัจจัยเสี่ยงของฉัน</span>
+      <span class="module-tag tag-risk">● ตรวจตามปัจจัยเสี่ยง</span>
+    </div>
+    <div class="ytabs" id="risk-dash-ytabs"></div>
+  </div>
+  <div class="pad" id="risk-dash-content">
+    <div class="loading"><span class="spinner"></span>กำลังโหลด...</div>
+  </div>
+</div>
+
+<!-- PAGE: ADMIN -->
+<div id="page-admin" class="page">
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-title">👑 จัดการระบบ Admin</span>
+      <span class="module-tag tag-admin">● Admin Only</span>
+    </div>
+  </div>
+  <div class="pad">
+    <div class="admin-tabs">
+      <div class="admin-tab active" id="atab-emp" onclick="switchAdminTab('emp')">👥 จัดการพนักงาน</div>
+      <div class="admin-tab" id="atab-annual" onclick="switchAdminTab('annual')">🏥 ผลตรวจประจำปี (รายบุคคล)</div>
+      <div class="admin-tab" id="atab-risk" onclick="switchAdminTab('risk')">⚠️ ผลตรวจปัจจัยเสี่ยง (รายบุคคล)</div>
+      <div class="admin-tab" id="atab-export" onclick="switchAdminTab('export')">📥 Export รายงาน</div>
+      <div class="admin-tab" id="atab-passwd" onclick="switchAdminTab('passwd')">🔑 คู่มือลืมรหัสผ่าน</div>
+    </div>
+    <div id="admin-content"><div class="loading"><span class="spinner"></span>กำลังโหลด...</div></div>
+  </div>
+</div>
+
+<!-- MODAL CONTAINER -->
+<div id="modal-bg" class="modal-bg" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal-box">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modal-content"></div>
+  </div>
+</div>
 ```
 
   </div><!-- /content -->
@@ -637,7 +709,7 @@ background:linear-gradient(180deg, var(–pea-purple-dark) 0%, #1E1B4B 100%);
 <script>
 // ===== SUPABASE + CONFIG =====
 let sb = null, currentUser = null, annualData = [], selectedYear = null;
-let dashCharts = {};
+let dashCharts = {}, riskData = [], editingRiskId = null, editingAnnualId = null;
 
 function saveConfig() {
   const url = document.getElementById('sb-url').value.trim();
@@ -697,18 +769,22 @@ async function doLogin() {
     // Toggle sidebar sections based on module
     document.getElementById('sidebar-annual-nav').style.display = currentTab === 'annual' ? 'block' : 'none';
     document.getElementById('sidebar-risk-nav').style.display = currentTab === 'risk' ? 'block' : 'none';
-    document.getElementById('nv-overview').style.display = isAdmin ? 'flex' : 'none';
-    document.getElementById('nv-report').style.display = isAdmin ? 'flex' : 'none';
+    if (currentTab === 'risk') {
+      document.getElementById('nv-overview').style.display = isAdmin ? 'flex' : 'none';
+      document.getElementById('nv-report').style.display = isAdmin ? 'flex' : 'none';
+      document.getElementById('nv-admin').style.display = isAdmin ? 'flex' : 'none';
+    }
     document.getElementById('login-screen').classList.remove('active');
     document.getElementById('main-screen').classList.add('active');
-    loadDashboard();
+    if (currentTab === 'annual') { goto('dashboard'); }
+    else { goto('risk-dash'); }
     showNotif(`✅ ยินดีต้อนรับ ${data.full_name}`, 'success');
   } catch(e) { errEl.textContent = '❌ ' + e.message; }
   btn.textContent = '🔐 เข้าสู่ระบบ'; btn.disabled = false;
 }
 
 function doLogout() {
-  currentUser = null; annualData = []; selectedYear = null;
+  currentUser = null; annualData = []; selectedYear = null; riskData = [];
   Object.values(dashCharts).forEach(c => { try { c.destroy(); } catch(e){} });
   dashCharts = {};
   document.getElementById('main-screen').classList.remove('active');
@@ -720,15 +796,18 @@ function doLogout() {
 function goto(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nv').forEach(n => n.classList.remove('active'));
-  document.getElementById('page-' + page).classList.add('active');
+  const pageEl = document.getElementById('page-' + page);
+  if (pageEl) pageEl.classList.add('active');
   const nvEl = document.getElementById('nv-' + page);
   if (nvEl) nvEl.classList.add('active');
   if (page === 'dashboard') loadDashboard();
   else if (page === 'results') loadResults();
   else if (page === 'ai') loadAIPage();
   else if (page === 'org-health') loadOrgHealth();
+  else if (page === 'risk-dash') loadRiskDash();
   else if (page === 'my-risk') loadMyRisk();
   else if (page === 'overview') loadOverview();
+  else if (page === 'admin') { loadAdmin(); }
 }
 
 // ===== FORM HELPERS =====
@@ -750,7 +829,6 @@ function calcBMI() {
 // ===== STATUS HELPERS (มาตรฐานสาธารณสุขไทย) =====
 function bmiStatus(b) {
   if (!b) return '<span class="badge b-gray">—</span>';
-  // ตามเกณฑ์ WHO Asia-Pacific + กรมอนามัยไทย
   if (b < 18.5) return '<span class="badge b-info">น้ำหนักน้อยกว่าเกณฑ์</span>';
   if (b < 23.0) return '<span class="badge b-ok">ปกติ (18.5-22.9)</span>';
   if (b < 25.0) return '<span class="badge b-warn">น้ำหนักเกิน (23-24.9)</span>';
@@ -759,14 +837,12 @@ function bmiStatus(b) {
 }
 function waistStatus(w, gender) {
   if (!w) return '<span class="badge b-gray">—</span>';
-  // กรมอนามัย: ชาย >90 ซม., หญิง >80 ซม. = ความเสี่ยงสูง
   const limit = (gender === 'female') ? 80 : 90;
   if (w > limit) return `<span class="badge b-danger">เสี่ยงโรคเมตาบอลิก (>${limit}ซม.)</span>`;
   return '<span class="badge b-ok">ปกติ</span>';
 }
 function bpStatus(s) {
   if (!s) return '<span class="badge b-gray">—</span>';
-  // ACC/AHA 2017 + สมาคมความดันโลหิตสูงไทย
   if (s < 120) return '<span class="badge b-ok">ปกติ (<120)</span>';
   if (s < 130) return '<span class="badge b-info">ความดันสูงปกติ (120-129)</span>';
   if (s < 140) return '<span class="badge b-warn">ความดันสูงระยะที่ 1 (130-139)</span>';
@@ -775,14 +851,12 @@ function bpStatus(s) {
 }
 function fbsStatus(v) {
   if (!v) return '<span class="badge b-gray">—</span>';
-  // ADA 2023 + แนวทางเบาหวานไทย
   if (v < 100) return '<span class="badge b-ok">ปกติ (<100)</span>';
   if (v < 126) return '<span class="badge b-warn">เสี่ยงเบาหวาน/Prediabetes (100-125)</span>';
   return '<span class="badge b-danger">สงสัยเบาหวาน (≥126)</span>';
 }
 function cholStatus(v) {
   if (!v) return '<span class="badge b-gray">—</span>';
-  // NCEP ATP III + แนวทางไขมันในเลือดไทย 2566
   if (v < 200) return '<span class="badge b-ok">ปกติ (<200)</span>';
   if (v < 240) return '<span class="badge b-warn">ค่อนข้างสูง (200-239)</span>';
   return '<span class="badge b-danger">สูงมาก (≥240)</span>';
@@ -810,7 +884,6 @@ function ldlStatus(v) {
 }
 function liverStatus(ast, alt) {
   if (!ast && !alt) return '<span class="badge b-gray">—</span>';
-  // ULN: AST/ALT ≤ 40 U/L (ชาย), ≤ 31 U/L (หญิง)
   const ulnA = 40, ulnB = 40;
   if (ast > ulnA * 3 || alt > ulnB * 3) return '<span class="badge b-danger">สูงมาก (>3x ULN)</span>';
   if (ast > ulnA || alt > ulnB) return '<span class="badge b-warn">สูง (>40 U/L)</span>';
@@ -818,7 +891,6 @@ function liverStatus(ast, alt) {
 }
 function creatinineStatus(v) {
   if (!v) return '<span class="badge b-gray">—</span>';
-  // KDIGO: เพศชาย 0.7-1.2, เพศหญิง 0.5-1.0
   if (v > 1.5) return '<span class="badge b-danger">สูงมาก — ไตบกพร่อง</span>';
   if (v > 1.2) return '<span class="badge b-warn">สูง (>1.2)</span>';
   return '<span class="badge b-ok">ปกติ (0.7-1.2)</span>';
@@ -832,8 +904,6 @@ function hbStatus(v) {
 }
 
 // ===== SCORING SYSTEM =====
-// คะแนนสุขภาพรวม 100 คะแนน — อิงแนวทาง WHO + กรมอนามัยไทย
-// น้ำหนัก: ความดัน 20, น้ำตาล 20, BMI 15, ไขมัน 20, ตับ 10, ไต 10, EKG 5
 const SCORE_SYSTEM = {
   bp: { weight: 20, fn: (s) => { if (!s) return 1; if (s < 120) return 1; if (s < 130) return 0.85; if (s < 140) return 0.6; if (s < 180) return 0.3; return 0; } },
   fbs: { weight: 20, fn: (v) => { if (!v) return 1; if (v < 100) return 1; if (v < 110) return 0.8; if (v < 126) return 0.5; return 0; } },
@@ -882,7 +952,6 @@ async function loadDashboard() {
       return;
     }
     selectedYear = annualData[0].checkup_year;
-    // Add computed scores
     annualData.forEach(d => { if (!d.ai_score) d.ai_score = calcScore(d); });
     renderDashboard();
   } catch(e) {
@@ -897,11 +966,9 @@ function renderDashboard() {
   const { label: slabel, color: scolor } = scoreLabel(score);
   const dashOffset = 339 - (339 * score / 100);
 
-  // Year tabs
   const ytabsEl = document.getElementById('dash-ytabs');
   ytabsEl.innerHTML = annualData.map(r => `<div class="ytab ${r.checkup_year === selectedYear ? 'active' : ''}" onclick="selectedYear=${r.checkup_year};renderDashboard()">${r.checkup_year}</div>`).join('');
 
-  // Trend arrows
   const prev = annualData.find(r => r.checkup_year === selectedYear - 1);
   const trendArrow = (cur, prv, field, reverse = false) => {
     if (!prv || !cur[field] || !prv[field]) return '';
@@ -913,7 +980,6 @@ function renderDashboard() {
   };
 
   el.innerHTML = `
-  <!-- STAT CARDS -->
   <div class="grid-4">
     <div class="stat-card"><div class="stat-ico">⚖️</div><div class="stat-lbl">BMI</div>
       <div class="stat-val">${d.bmi||'—'} ${trendArrow(d,prev,'bmi',true)}</div>
@@ -929,7 +995,6 @@ function renderDashboard() {
       ${cholStatus(d.total_cholesterol)}</div>
   </div>
 
-  <!-- SCORE + CHARTS ROW -->
   <div class="grid-21">
     <div class="card">
       <div class="card-title">📈 กราฟคะแนนสุขภาพรวมย้อนหลัง & พยากรณ์แนวโน้ม</div>
@@ -957,7 +1022,6 @@ function renderDashboard() {
     </div>
   </div>
 
-  <!-- MULTI CHARTS -->
   <div class="grid-2">
     <div class="card">
       <div class="card-title">📊 กราฟแนวโน้มความดันโลหิต & น้ำตาล</div>
@@ -969,13 +1033,12 @@ function renderDashboard() {
     </div>
   </div>
 
-  <!-- ADDITIONAL VALUES -->
   <div class="card" style="margin-bottom:20px;">
     <div class="card-title">🔬 ค่าตรวจสำคัญอื่นๆ — ปี ${selectedYear}</div>
     <table class="tbl">
       <thead><tr><th>รายการ</th><th>ค่าที่ตรวจได้</th><th>ค่าอ้างอิง (มาตรฐานไทย)</th><th>สถานะ</th></tr></thead>
       <tbody>
-        <tr><td>AST (SGOT)</td><td>${d.sgot ? d.sgot+' U/L' : d.sgot === null && d.not_tested_liver ? '<span class="badge b-gray">ไม่ได้ตรวจ</span>' : '—'}</td><td>≤ 40 U/L</td><td>${liverStatus(d.sgot, d.sgpt)}</td></tr>
+        <tr><td>AST (SGOT)</td><td>${d.sgot ? d.sgot+' U/L' : '—'}</td><td>≤ 40 U/L</td><td>${liverStatus(d.sgot, d.sgpt)}</td></tr>
         <tr><td>ALT (SGPT)</td><td>${d.sgpt ? d.sgpt+' U/L' : '—'}</td><td>≤ 40 U/L</td><td></td></tr>
         <tr><td>Creatinine</td><td>${d.creatinine ? d.creatinine+' mg/dL' : '—'}</td><td>0.7-1.2 mg/dL</td><td>${creatinineStatus(d.creatinine)}</td></tr>
         <tr><td>Hemoglobin</td><td>${d.hemoglobin ? d.hemoglobin+' g/dL' : '—'}</td><td>ชาย 13.5-17.5 / หญิง 12-16</td><td>${hbStatus(d.hemoglobin)}</td></tr>
@@ -989,7 +1052,6 @@ function renderDashboard() {
     </table>
   </div>
 
-  <!-- AI BOX -->
   ${d.ai_summary ? `
   <div class="ai-box">
     <div class="ai-head"><div class="ai-dot"></div><span class="ai-title">🤖 ประเมินสุขภาพเบื้องต้น ปี ${selectedYear}</span><button class="btn-gold" style="margin-left:auto;padding:6px 14px;font-size:12px;" onclick="runAI()">🔄 ประเมินใหม่</button></div>
@@ -1003,7 +1065,6 @@ function renderDashboard() {
   </div>`}
   `;
 
-  // Draw charts after DOM ready
   setTimeout(() => {
     drawScoreChart();
     drawBPFBSChart();
@@ -1020,14 +1081,13 @@ function drawScoreChart() {
   const labels = sorted.map(r => 'ปี ' + r.checkup_year);
   const scores = sorted.map(r => r.ai_score || calcScore(r));
 
-  // Simple linear forecast for next year
   let forecast = null;
   if (scores.length >= 2) {
     const n = scores.length;
     const last = scores[n-1], prev2 = scores[n-2];
     forecast = Math.max(0, Math.min(100, Math.round(last + (last - prev2) * 0.7)));
     labels.push('ปี ' + (sorted[sorted.length-1].checkup_year + 1) + ' (พยากรณ์)');
-    scores.push(null); // gap in line
+    scores.push(null);
   }
 
   dashCharts['score'] = new Chart(ctx, {
@@ -1155,7 +1215,7 @@ function renderResultTable(year, el) {
   ];
   document.getElementById('res-content').innerHTML = `
   <div class="card">
-    <div class="card-title">📋 ผลตรวจสุขภาพปี ${year} — ${dateTH(d.checkup_date)} · ${d.hospital||''}</div>
+    <div class="card-title" style="justify-content:space-between;">📋 ผลตรวจสุขภาพปี ${year} — ${dateTH(d.checkup_date)} · ${d.hospital||''} <button class="btn-xs btn-edit" onclick="editAnnual(${JSON.stringify(d).replace(/"/g,'&quot;')})">✏️ แก้ไขข้อมูลนี้</button></div>
     <table class="tbl"><thead><tr><th>รายการตรวจ</th><th>ผลตรวจ</th><th>ค่าอ้างอิง (มาตรฐานไทย)</th><th>สถานะ</th></tr></thead>
     <tbody>${rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]!=null&&r[1]!==undefined&&r[1]!=='' ? r[1]+' '+r[2] : '<span class="badge b-gray">ไม่ได้ตรวจ</span>'}</td><td style="font-size:12px;color:var(--sub)">${r[3]}</td><td>${r[4]}</td></tr>`).join('')}
     </tbody></table>
@@ -1174,7 +1234,6 @@ async function loadAIPage() {
     <button class="btn-gold" style="margin-left:auto;padding:6px 14px;font-size:12px;" onclick="runAI()">🔄 ประเมินใหม่</button></div>
     <div style="font-size:11px;color:rgba(255,255,255,.45);margin-bottom:10px;font-style:italic;">⚠️ ผลประเมินนี้เป็นเพียงข้อมูลเบื้องต้น ไม่ใช่คำแนะนำทางการแพทย์ กรุณาปรึกษาแพทย์เพื่อการวินิจฉัยที่ถูกต้อง</div>
     <div class="ai-text" id="ai-result-text">${d.ai_summary ? d.ai_summary.replace(/\n/g,'<br>') : '<span style="opacity:.65">กดปุ่มเพื่อให้ AI ประเมินสุขภาพเบื้องต้นจากผลตรวจของคุณ</span>'}</div>
-  </div>
   </div>
   <div class="card">
     <div class="card-title">📅 ประวัติคะแนนสุขภาพ</div>
@@ -1286,10 +1345,18 @@ async function saveAnnual() {
     vision_left: document.getElementById('f-vl').value || null,
   };
   try {
-    const { error } = await sb.from('annual_checkup').upsert(payload, { onConflict: 'emp_id,checkup_year' });
+    let error;
+    if (editingAnnualId) {
+      ({ error } = await sb.from('annual_checkup').update(payload).eq('id', editingAnnualId));
+      editingAnnualId = null;
+    } else {
+      ({ error } = await sb.from('annual_checkup').upsert(payload, { onConflict: 'emp_id,checkup_year' }));
+    }
     if (error) throw error;
     showNotif('✅ บันทึกข้อมูลเรียบร้อย!', 'success');
     annualData = [];
+    const btn2 = document.getElementById('btn-save-annual');
+    if (btn2) btn2.textContent = '💾 บันทึกข้อมูล';
     clearAnnualForm();
     goto('dashboard');
   } catch(e) { showNotif('❌ ' + e.message, 'error'); }
@@ -1309,33 +1376,40 @@ async function saveRisk() {
     emp_id: currentUser.emp_id,
     checkup_year: parseInt(document.getElementById('rf-year').value),
     checkup_date: document.getElementById('rf-date').value||null,
-    hospital: document.getElementById('rf-hospital').value,
-    doctor: document.getElementById('rf-doctor').value,
-    risk_type: document.getElementById('rf-type').value,
-    risk_detail: document.getElementById('rf-detail').value,
+    hospital: document.getElementById('rf-hospital').value||null,
+    doctor: document.getElementById('rf-doctor').value||null,
     hearing_right: parseInt(document.getElementById('rf-hr').value)||null,
     hearing_left: parseInt(document.getElementById('rf-hl').value)||null,
     hearing_result: document.getElementById('rf-hres').value,
     fvc: parseFloat(document.getElementById('rf-fvc').value)||null,
     fev1: parseFloat(document.getElementById('rf-fev1').value)||null,
     lung_result: document.getElementById('rf-lres').value,
-    chemical_test: document.getElementById('rf-chem').value,
-    chemical_result: document.getElementById('rf-cres').value,
-    chemical_unit: document.getElementById('rf-cunit').value,
-    chemical_reference: document.getElementById('rf-cref').value,
+    chemical_test: document.getElementById('rf-chem').value||null,
+    chemical_result: document.getElementById('rf-cres').value||null,
+    chemical_unit: document.getElementById('rf-cunit').value||null,
+    chemical_reference: document.getElementById('rf-cref').value||null,
     ekg_risk_result: document.getElementById('rf-ekg').value,
     creatinine_risk: parseFloat(document.getElementById('rf-cr').value)||null,
     bmi_risk: parseFloat(document.getElementById('rf-bmi').value)||null,
     overall_result: document.getElementById('rf-overall').value,
-    notes: document.getElementById('rf-notes').value,
+    notes: document.getElementById('rf-notes').value||null,
   };
   try {
-    const { error } = await sb.from('risk_checkup').insert(payload);
+    let error;
+    if (editingRiskId) {
+      ({ error } = await sb.from('risk_checkup').update(payload).eq('id', editingRiskId));
+    } else {
+      ({ error } = await sb.from('risk_checkup').insert(payload));
+    }
     if (error) throw error;
-    showNotif('✅ บันทึกข้อมูลปัจจัยเสี่ยงเรียบร้อย!', 'success');
+    showNotif(editingRiskId ? '✅ แก้ไขข้อมูลเรียบร้อย!' : '✅ บันทึกข้อมูลเรียบร้อย!', 'success');
+    editingRiskId = null;
+    document.getElementById('btn-save-risk').textContent = '💾 บันทึกข้อมูล';
+    riskData = [];
     clearRiskForm();
+    goto('my-risk');
   } catch(e) { showNotif('❌ ' + e.message, 'error'); }
-  btn.disabled = false; btn.textContent = '💾 บันทึกข้อมูล';
+  btn.disabled = false; btn.textContent = editingRiskId ? '💾 บันทึกการแก้ไข' : '💾 บันทึกข้อมูล';
 }
 
 function clearRiskForm() {
@@ -1348,126 +1422,422 @@ async function loadMyRisk() {
   const el = document.getElementById('my-risk-content');
   el.innerHTML = '<div class="loading"><span class="spinner"></span>กำลังโหลด...</div>';
   const { data } = await sb.from('risk_checkup').select('*').eq('emp_id', currentUser.emp_id).order('checkup_year', { ascending: false });
-  if (!data?.length) { el.innerHTML = '<div class="empty"><div class="empty-ico">⚠️</div><h3>ยังไม่มีข้อมูล</h3></div>'; return; }
-  el.innerHTML = `<div class="card"><div class="card-title">⚠️ ประวัติตรวจปัจจัยเสี่ยง</div>
-  <table class="tbl"><thead><tr><th>ปี</th><th>ปัจจัยเสี่ยง</th><th>การได้ยิน</th><th>ปอด</th><th>สารเคมี</th><th>ผลรวม</th></tr></thead>
-  <tbody>${data.map(r=>`<tr><td>${r.checkup_year}</td><td>${r.risk_type||'—'}</td><td>${r.hearing_result||'—'}</td><td>${r.lung_result||'—'}</td><td>${r.chemical_test?r.chemical_test+': '+r.chemical_result+' '+r.chemical_unit:'—'}</td><td><span class="badge ${r.overall_result==='ปกติ'?'b-ok':'b-warn'}">${r.overall_result||'—'}</span></td></tr>`).join('')}</tbody></table></div>`;
+  riskData = data || [];
+  if (!riskData.length) { el.innerHTML = '<div class="empty"><div class="empty-ico">⚠️</div><h3>ยังไม่มีข้อมูล</h3><button class="btn-primary" style="margin-top:12px" onclick="goto(\'enter-risk\')">✏️ ลงข้อมูลเลย</button></div>'; return; }
+  el.innerHTML = `<div class="card"><div class="card-title" style="justify-content:space-between;">⚠️ ประวัติตรวจปัจจัยเสี่ยง <button class="btn-primary" style="padding:6px 14px;font-size:12px;" onclick="goto('enter-risk')">+ ลงข้อมูลใหม่</button></div>
+  <div style="overflow-x:auto;"><table class="emp-table"><thead><tr><th>ปี</th><th>การได้ยิน</th><th>ปอด FVC</th><th>สารเคมี</th><th>EKG</th><th>ผลรวม</th><th>แก้ไข</th></tr></thead>
+  <tbody>${riskData.map(r=>`<tr>
+    <td><strong>${r.checkup_year}</strong><br><span style="font-size:11px;color:var(--sub)">${r.checkup_date||''}</span></td>
+    <td>${r.hearing_result||'—'}<br><span style="font-size:11px;color:var(--sub)">${r.hearing_right||''}${r.hearing_right?'/':''} ${r.hearing_left||''} ${r.hearing_right||r.hearing_left?'dB':''}</span></td>
+    <td>${r.fvc||'—'}${r.fvc?'%':''}<br><span style="font-size:11px;color:var(--sub)">${r.lung_result||'—'}</span></td>
+    <td style="font-size:12px">${r.chemical_test||'—'}</td>
+    <td><span class="badge ${r.ekg_risk_result==='ปกติ'?'b-ok':r.ekg_risk_result&&r.ekg_risk_result!=='ไม่ได้ตรวจ'?'b-warn':'b-gray'}">${r.ekg_risk_result||'—'}</span></td>
+    <td><span class="badge ${r.overall_result==='ปกติ'?'b-ok':'b-warn'}">${r.overall_result||'—'}</span></td>
+    <td><button class="btn-xs btn-edit" onclick="editRisk('${r.id}')">✏️ แก้ไข</button></td>
+  </tr>`).join('')}</tbody></table></div></div>`;
 }
 
-// ===== ORG HEALTH (Annual module - all employees) =====
-async function loadOrgHealth() {
-  const el = document.getElementById('org-health-content');
-  el.innerHTML = '<div class="loading"><span class="spinner"></span>กำลังโหลดข้อมูล...</div>';
-  try {
-    const [annualRes, empRes] = await Promise.all([
-      sb.from('annual_checkup').select('bmi,bp_systolic,fbs,total_cholesterol,hdl,ldl,triglyceride,sgot,sgpt,creatinine,ekg_result,xray_result,urine_result,checkup_year').eq('checkup_year', 2567),
-      sb.from('employees').select('id,role').eq('role','employee'),
-    ]);
-    const annual = annualRes.data || [];
-    const total = empRes.data?.length || 142;
-    const n = annual.length;
-    if (!n) {
-      el.innerHTML = '<div class="empty"><div class="empty-ico">📊</div><h3>ยังไม่มีข้อมูลผลตรวจปี 2567</h3></div>';
-      return;
-    }
-    const pct = (count) => n > 0 ? Math.round(count/n*100) : 0;
-    const stats = [
-      { icon:'⚖️', label:'น้ำหนักเกิน/อ้วน (BMI≥23)', n: annual.filter(r=>r.bmi>=23).length, ref:'BMI ≥23' },
-      { icon:'🩸', label:'ความดันสูง (≥130 mmHg)', n: annual.filter(r=>r.bp_systolic>=130).length, ref:'≥130 mmHg' },
-      { icon:'🍬', label:'น้ำตาลสูง/เสี่ยงเบาหวาน (FBS≥100)', n: annual.filter(r=>r.fbs>=100).length, ref:'FBS≥100' },
-      { icon:'💛', label:'คอเลสเตอรอลสูง (≥200)', n: annual.filter(r=>r.total_cholesterol>=200).length, ref:'≥200 mg/dL' },
-      { icon:'🧡', label:'ไขมัน TG สูง (≥150)', n: annual.filter(r=>r.triglyceride>=150).length, ref:'≥150 mg/dL' },
-      { icon:'💚', label:'HDL ต่ำ (ชาย<40)', n: annual.filter(r=>r.hdl && r.hdl<40).length, ref:'<40 mg/dL' },
-      { icon:'🫁', label:'ตับผิดปกติ (AST/ALT>40)', n: annual.filter(r=>(r.sgot>40||r.sgpt>40)).length, ref:'>40 U/L' },
-      { icon:'🫘', label:'ไตผิดปกติ (Cr>1.2)', n: annual.filter(r=>r.creatinine>1.2).length, ref:'>1.2 mg/dL' },
-      { icon:'❤️', label:'EKG ผิดปกติ', n: annual.filter(r=>r.ekg_result && !r.ekg_result.includes('ปกติ') && r.ekg_result!=='ไม่ได้ตรวจ').length, ref:'Non-normal' },
-      { icon:'🫁', label:'X-Ray ผิดปกติ', n: annual.filter(r=>r.xray_result && !r.xray_result.includes('ปกติ') && r.xray_result!=='ไม่ได้ตรวจ').length, ref:'Non-normal' },
-    ];
-    const depts = ['แผนกก่อสร้าง','แผนกปฏิบัติการ','แผนกมิเตอร์','แผนกคลังพัสดุ','แผนกบัญชี','แผนกสนับสนุน','แผนกบริการลูกค้า'];
-    const deptColors = ['#6B21A8','#7C3AED','#8B5CF6','#A78BFA','#6B21A8','#7C3AED','#8B5CF6'];
-    const deptPcts = [100,95,100,88,100,92,100];
-    el.innerHTML = `
-    <div class="grid-3" style="margin-bottom:18px;">
-      <div class="ov-card"><div class="ov-num" style="color:var(--pea-purple)">${total}</div><div class="ov-lbl">พนักงานทั้งหมด (142 คน)</div></div>
-      <div class="ov-card"><div class="ov-num" style="color:var(--info)">${n}</div><div class="ov-lbl">เข้ารับตรวจปี 2567</div><div style="font-size:12px;color:var(--sub);margin-top:3px">${pct(n)}% ของพนักงานทั้งหมด</div></div>
-      <div class="ov-card"><div class="ov-num" style="color:var(--warning)">${annual.filter(r=>r.bmi>=23||r.bp_systolic>=130||r.fbs>=100||r.total_cholesterol>=200).length}</div><div class="ov-lbl">พบความผิดปกติอย่างน้อย 1 รายการ</div></div>
-    </div>
+function editRisk(id) {
+  const r = riskData.find(x => x.id === id);
+  if (!r) return;
+  editingRiskId = id;
+  goto('enter-risk');
+  setTimeout(() => {
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+    set('rf-year', r.checkup_year); set('rf-date', r.checkup_date); set('rf-hospital', r.hospital);
+    set('rf-doctor', r.doctor); set('rf-hr', r.hearing_right); set('rf-hl', r.hearing_left);
+    set('rf-fvc', r.fvc); set('rf-fev1', r.fev1); set('rf-chem', r.chemical_test);
+    set('rf-cres', r.chemical_result); set('rf-cunit', r.chemical_unit); set('rf-cref', r.chemical_reference);
+    set('rf-cr', r.creatinine_risk); set('rf-bmi', r.bmi_risk); set('rf-notes', r.notes);
+    const setSelect = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+    setSelect('rf-hres', r.hearing_result); setSelect('rf-lres', r.lung_result);
+    setSelect('rf-ekg', r.ekg_risk_result); setSelect('rf-overall', r.overall_result);
+    document.getElementById('btn-save-risk').textContent = '💾 บันทึกการแก้ไข';
+    showNotif('📝 โหลดข้อมูลเดิมเรียบร้อย — แก้ไขแล้วกด บันทึก', 'success');
+  }, 150);
+}
 
+// ===== RISK DASHBOARD =====
+async function loadRiskDash() {
+  const el = document.getElementById('risk-dash-content');
+  el.innerHTML = '<div class="loading"><span class="spinner"></span>กำลังโหลด...</div>';
+  try {
+    if (!riskData.length) {
+      const { data } = await sb.from('risk_checkup').select('*').eq('emp_id', currentUser.emp_id).order('checkup_year', { ascending: false });
+      riskData = data || [];
+    }
+    if (!riskData.length) { el.innerHTML = `<div class="empty"><div class="empty-ico">⚠️</div><h3>ยังไม่มีข้อมูลปัจจัยเสี่ยง</h3><button class="btn-primary" style="margin-top:12px" onclick="goto('enter-risk')">✏️ ลงข้อมูลเลย</button></div>`; return; }
+    const years = [...new Set(riskData.map(r => r.checkup_year))].sort((a,b) => b-a);
+    if (!window.selectedRiskYear || !years.includes(window.selectedRiskYear)) window.selectedRiskYear = years[0];
+    const ytabsEl = document.getElementById('risk-dash-ytabs');
+    ytabsEl.innerHTML = years.map(y => `<div class="ytab ${y===window.selectedRiskYear?'active':''}" onclick="window.selectedRiskYear=${y};loadRiskDash()">${y}</div>`).join('');
+    const d = riskData.find(r => r.checkup_year === window.selectedRiskYear);
+    const hearBadge = v => !v||v==='ไม่ได้ตรวจ'?'<span class="badge b-gray">ไม่ได้ตรวจ</span>':v==='ปกติ'?'<span class="badge b-ok">ปกติ</span>':v.includes('เล็กน้อย')?'<span class="badge b-warn">สูญเสียเล็กน้อย</span>':'<span class="badge b-danger">สูญเสียมาก</span>';
+    const lungBadge = v => !v||v==='ไม่ได้ตรวจ'?'<span class="badge b-gray">ไม่ได้ตรวจ</span>':v==='ปกติ'?'<span class="badge b-ok">ปกติ</span>':`<span class="badge b-warn">${v}</span>`;
+    const fvcBadge = v => !v?'<span class="badge b-gray">—</span>':v>=80?'<span class="badge b-ok">ปกติ (≥80%)</span>':v>=60?'<span class="badge b-warn">ลดลงปานกลาง</span>':'<span class="badge b-danger">ลดลงมาก</span>';
+    const ekgBadge = v => !v||v==='ไม่ได้ตรวจ'?'<span class="badge b-gray">ไม่ได้ตรวจ</span>':v==='ปกติ'?'<span class="badge b-ok">ปกติ</span>':'<span class="badge b-warn">ผิดปกติ</span>';
+    el.innerHTML = `
+    <div class="risk-stat-grid">
+      <div class="risk-stat-card"><div class="risk-stat-ico">👂</div><div class="risk-stat-lbl">การได้ยิน</div><div class="risk-stat-val">${d.hearing_right||'—'}/${d.hearing_left||'—'} <span style="font-size:12px;font-weight:400;color:var(--sub)">dB</span></div>${hearBadge(d.hearing_result)}</div>
+      <div class="risk-stat-card"><div class="risk-stat-ico">🫁</div><div class="risk-stat-lbl">สมรรถภาพปอด FVC</div><div class="risk-stat-val">${d.fvc||'—'}<span style="font-size:12px;font-weight:400;color:var(--sub)">%</span></div>${fvcBadge(d.fvc)}</div>
+      <div class="risk-stat-card"><div class="risk-stat-ico">❤️</div><div class="risk-stat-lbl">EKG</div><div class="risk-stat-val" style="font-size:14px">${d.ekg_risk_result||'—'}</div>${ekgBadge(d.ekg_risk_result)}</div>
+      <div class="risk-stat-card"><div class="risk-stat-ico">📊</div><div class="risk-stat-lbl">ผลรวม</div><div class="risk-stat-val" style="font-size:15px">${d.overall_result||'—'}</div><span class="badge ${d.overall_result==='ปกติ'?'b-ok':'b-warn'}">${d.overall_result||'—'}</span></div>
+    </div>
     <div class="grid-2">
-      <div class="card">
-        <div class="card-title">⚠️ สัดส่วนผู้มีค่าผิดเกณฑ์ (จากผู้เข้าตรวจ ${n} คน)</div>
-        ${stats.map(s => {
-          const p = pct(s.n);
-          const color = p>=30?'#DC2626':p>=15?'#D97706':'#6B21A8';
-          return `<div class="dept-row">
-            <div style="font-size:12px;width:180px;flex-shrink:0;">${s.icon} ${s.label}</div>
-            <div class="dept-track"><div class="dept-fill" style="width:${Math.min(p,100)}%;background:${color};"></div></div>
-            <div style="font-size:12px;font-weight:700;color:${color};width:50px;text-align:right">${s.n} คน</div>
-            <div style="font-size:11px;color:var(--sub);width:30px;text-align:right">${p}%</div>
-          </div>`;
-        }).join('')}
+      <div class="card"><div class="card-title">👂 แนวโน้มการได้ยิน (dB HL)</div><div class="chart-wrap-sm"><canvas id="chart-hearing"></canvas></div></div>
+      <div class="card"><div class="card-title">🫁 แนวโน้มสมรรถภาพปอด (%)</div><div class="chart-wrap-sm"><canvas id="chart-lung"></canvas></div></div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="justify-content:space-between;">🔬 รายละเอียดผลตรวจ ปี ${window.selectedRiskYear} <button class="btn-xs btn-edit" onclick="editRisk('${d.id}')">✏️ แก้ไขข้อมูลนี้</button></div>
+      <table class="tbl"><thead><tr><th>รายการ</th><th>ผลตรวจ</th><th>ค่าอ้างอิง</th><th>สถานะ</th></tr></thead><tbody>
+        <tr><td>👂 หูขวา</td><td>${d.hearing_right||'—'} dB</td><td>&lt;25 dB HL</td><td>${d.hearing_right?d.hearing_right<25?'<span class="badge b-ok">ปกติ</span>':d.hearing_right<40?'<span class="badge b-warn">สูญเสียเล็กน้อย</span>':'<span class="badge b-danger">สูญเสียมาก</span>':'<span class="badge b-gray">—</span>'}</td></tr>
+        <tr><td>👂 หูซ้าย</td><td>${d.hearing_left||'—'} dB</td><td>&lt;25 dB HL</td><td>${d.hearing_left?d.hearing_left<25?'<span class="badge b-ok">ปกติ</span>':d.hearing_left<40?'<span class="badge b-warn">สูญเสียเล็กน้อย</span>':'<span class="badge b-danger">สูญเสียมาก</span>':'<span class="badge b-gray">—</span>'}</td></tr>
+        <tr><td>🫁 FVC</td><td>${d.fvc||'—'}${d.fvc?'%':''}</td><td>≥80% predicted</td><td>${fvcBadge(d.fvc)}</td></tr>
+        <tr><td>🫁 FEV1</td><td>${d.fev1||'—'}${d.fev1?'%':''}</td><td>≥70%</td><td>${d.fev1?d.fev1>=70?'<span class="badge b-ok">ปกติ</span>':'<span class="badge b-warn">ลดลง</span>':'<span class="badge b-gray">—</span>'}</td></tr>
+        <tr><td>🫁 ผลปอด</td><td colspan="2">${d.lung_result||'—'}</td><td>${lungBadge(d.lung_result)}</td></tr>
+        <tr><td>⚗️ สารเคมี</td><td>${d.chemical_test||'—'}: ${d.chemical_result||'—'} ${d.chemical_unit||''}</td><td>${d.chemical_reference||'—'}</td><td><span class="badge b-info">ดูผล</span></td></tr>
+        <tr><td>❤️ EKG</td><td>${d.ekg_risk_result||'—'}</td><td>Normal Sinus Rhythm</td><td>${ekgBadge(d.ekg_risk_result)}</td></tr>
+        <tr><td>🫘 Creatinine</td><td>${d.creatinine_risk||'—'}${d.creatinine_risk?' mg/dL':''}</td><td>0.7-1.2 mg/dL</td><td>${d.creatinine_risk?d.creatinine_risk<=1.2?'<span class="badge b-ok">ปกติ</span>':'<span class="badge b-warn">สูง</span>':'<span class="badge b-gray">—</span>'}</td></tr>
+      </tbody></table>
+      ${d.notes?`<div style="margin-top:12px;padding:10px 14px;background:var(--bg);border-radius:8px;font-size:13px;color:var(--sub);">📝 หมายเหตุ: ${d.notes}</div>`:''}
+    </div>`;
+    setTimeout(() => {
+      const sorted = [...riskData].sort((a,b)=>a.checkup_year-b.checkup_year);
+      const mkChart = (id, key, datasets, opts={}) => {
+        const ctx = document.getElementById(id); if (!ctx) return;
+        if (dashCharts[id]) dashCharts[id].destroy();
+        dashCharts[id] = new Chart(ctx, { type:'line', data:{ labels:sorted.map(r=>'ปี '+r.checkup_year), datasets }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ labels:{ font:{ family:'Sarabun', size:11 }}}}, scales:{ y:{ ticks:{ font:{ family:'Sarabun' }}, grid:{ color:'#F3F4F6' }, ...opts }, x:{ ticks:{ font:{ family:'Sarabun', size:11 }}}}}});
+      };
+      mkChart('chart-hearing', null, [
+        {label:'หูขวา (dB)',data:sorted.map(r=>r.hearing_right),borderColor:'#6B21A8',borderWidth:2,tension:.4,pointRadius:5,pointBackgroundColor:'#6B21A8'},
+        {label:'หูซ้าย (dB)',data:sorted.map(r=>r.hearing_left),borderColor:'#D97706',borderWidth:2,tension:.4,pointRadius:5,pointBackgroundColor:'#D97706'},
+      ]);
+      mkChart('chart-lung', null, [
+        {label:'FVC (%)',data:sorted.map(r=>r.fvc),borderColor:'#059669',borderWidth:2,tension:.4,fill:true,backgroundColor:'rgba(5,150,105,.07)',pointRadius:5,pointBackgroundColor:'#059669'},
+        {label:'FEV1 (%)',data:sorted.map(r=>r.fev1),borderColor:'#1D4ED8',borderWidth:2,tension:.4,pointRadius:5,pointBackgroundColor:'#1D4ED8'},
+      ], {min:50,max:110});
+    }, 100);
+  } catch(e) { document.getElementById('risk-dash-content').innerHTML = `<div class="empty"><div class="empty-ico">⚠️</div><h3>${e.message}</h3></div>`; }
+}
+
+// ===== EDIT ANNUAL =====
+function editAnnual(d) {
+  editingAnnualId = d.id;
+  goto('enter-annual');
+  setTimeout(() => {
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val||''; };
+    set('f-year',d.checkup_year); set('f-date',d.checkup_date); set('f-hospital',d.hospital);
+    set('f-weight',d.weight); set('f-height',d.height); set('f-bmi',d.bmi); set('f-waist',d.waist_circumference);
+    set('f-bps',d.bp_systolic); set('f-bpd',d.bp_diastolic); set('f-pulse',d.pulse);
+    set('f-hb',d.hemoglobin); set('f-hct',d.hematocrit); set('f-wbc',d.wbc); set('f-plt',d.platelet);
+    set('f-fbs',d.fbs); set('f-hba1c',d.hba1c); set('f-chol',d.total_cholesterol);
+    set('f-hdl',d.hdl); set('f-ldl',d.ldl); set('f-tg',d.triglyceride);
+    set('f-sgot',d.sgot); set('f-sgpt',d.sgpt); set('f-ggt',d.ggt); set('f-alp',d.alp);
+    set('f-cr',d.creatinine); set('f-bun',d.bun); set('f-ua',d.uric_acid);
+    set('f-urine-note',d.urine_note); set('f-xray-note',d.xray_note);
+    set('f-vr',d.vision_right); set('f-vl',d.vision_left);
+    const setS = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+    setS('f-urine',d.urine_result); setS('f-ekg',d.ekg_result); setS('f-xray',d.xray_result);
+    const btn = document.getElementById('btn-save-annual');
+    if (btn) btn.textContent = '💾 บันทึกการแก้ไข';
+    showNotif('📝 โหลดข้อมูลเดิมแล้ว — แก้ไขแล้วกด บันทึก', 'success');
+  }, 150);
+}
+
+// ===== MODAL =====
+function openModal(title, html) {
+  document.getElementById('modal-content').innerHTML = `<div class="modal-title">${title}</div>${html}`;
+  document.getElementById('modal-bg').style.display = 'flex';
+}
+function closeModal() { document.getElementById('modal-bg').style.display = 'none'; }
+
+// ===== ADMIN =====
+let adminTab = 'emp', allEmployees = [];
+function switchAdminTab(tab) {
+  adminTab = tab;
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('atab-' + tab).classList.add('active');
+  loadAdmin();
+}
+
+async function loadAdmin() {
+  if (currentUser.role !== 'admin') return;
+  const el = document.getElementById('admin-content');
+  el.innerHTML = '<div class="loading"><span class="spinner"></span>กำลังโหลด...</div>';
+
+  if (adminTab === 'emp') {
+    const { data } = await sb.from('employees').select('*').order('emp_id');
+    allEmployees = data || [];
+    el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div style="font-size:13px;color:var(--sub);">พนักงานทั้งหมด <strong>${allEmployees.length} คน</strong></div>
+      <button class="btn-primary" onclick="openAddEmpModal()">+ เพิ่มพนักงาน</button>
+    </div>
+    <div style="overflow-x:auto;"><table class="emp-table">
+      <thead><tr><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>แผนก</th><th>บทบาท</th><th>จัดการ</th></tr></thead>
+      <tbody>${allEmployees.map(e=>`<tr>
+        <td><span class="badge b-purple">${e.emp_id}</span></td>
+        <td>${e.full_name}</td>
+        <td style="font-size:12px">${e.department||'—'}</td>
+        <td><span class="badge ${e.role==='admin'?'b-danger':'b-ok'}">${e.role==='admin'?'👑 Admin':'พนักงาน'}</span></td>
+        <td style="display:flex;gap:5px;flex-wrap:wrap;">
+          <button class="btn-xs btn-edit" onclick="openEditEmpModal('${e.emp_id}')">✏️ แก้ไข</button>
+          <button class="btn-xs btn-reset" onclick="resetPassword('${e.emp_id}','${e.full_name.replace(/'/g,"\\'")}')">🔑 รีเซ็ต</button>
+        </td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+
+  } else if (adminTab === 'annual') {
+    const { data } = await sb.from('annual_checkup').select('id,emp_id,checkup_year,bmi,bp_systolic,bp_diastolic,fbs,total_cholesterol,hdl,ldl,triglyceride,sgot,sgpt,creatinine,ekg_result,ai_score,employees(full_name,department)').order('checkup_year',{ascending:false});
+    el.innerHTML = `<div style="overflow-x:auto;"><table class="emp-table">
+      <thead><tr><th>ชื่อ</th><th>แผนก</th><th>ปี</th><th>BMI</th><th>ความดัน</th><th>FBS</th><th>Chol</th><th>คะแนน</th><th>แก้ไข</th></tr></thead>
+      <tbody>${(data||[]).map(r=>`<tr>
+        <td>${r.employees?.full_name||r.emp_id}</td>
+        <td style="font-size:12px">${r.employees?.department||'—'}</td>
+        <td>${r.checkup_year}</td>
+        <td>${r.bmi||'—'}</td><td>${r.bp_systolic||'—'}/${r.bp_diastolic||'—'}</td>
+        <td>${r.fbs||'—'}</td><td>${r.total_cholesterol||'—'}</td>
+        <td><span style="font-weight:700;color:${(r.ai_score||0)>=75?'#16A34A':'#D97706'}">${r.ai_score||'—'}</span></td>
+        <td><button class="btn-xs btn-edit" onclick="adminEditAnnual('${r.id}')">✏️</button></td>
+      </tr>`).join('')}</tbody></table></div>`;
+
+  } else if (adminTab === 'risk') {
+    const { data } = await sb.from('risk_checkup').select('*,employees(full_name,department)').order('checkup_year',{ascending:false});
+    el.innerHTML = `<div style="overflow-x:auto;"><table class="emp-table">
+      <thead><tr><th>ชื่อ</th><th>แผนก</th><th>ปี</th><th>การได้ยิน</th><th>ปอด FVC</th><th>EKG</th><th>ผลรวม</th></tr></thead>
+      <tbody>${(data||[]).map(r=>`<tr>
+        <td>${r.employees?.full_name||r.emp_id}</td>
+        <td style="font-size:12px">${r.employees?.department||'—'}</td>
+        <td>${r.checkup_year}</td>
+        <td>${r.hearing_result||'—'}</td>
+        <td>${r.fvc||'—'}${r.fvc?'%':''}</td>
+        <td style="font-size:12px">${r.ekg_risk_result||'—'}</td>
+        <td><span class="badge ${r.overall_result==='ปกติ'?'b-ok':'b-warn'}">${r.overall_result||'—'}</span></td>
+      </tr>`).join('')}</tbody></table></div>`;
+
+  } else if (adminTab === 'export') {
+    el.innerHTML = `<div class="grid-2">
+      <div class="card" style="text-align:center;padding:28px;">
+        <div style="font-size:44px;margin-bottom:12px;">📊</div>
+        <div style="font-family:'Prompt',sans-serif;font-weight:700;font-size:15px;margin-bottom:6px;">ผลตรวจสุขภาพประจำปี</div>
+        <div style="font-size:12px;color:var(--sub);margin-bottom:16px;">ข้อมูลทั้งหมดเป็น CSV พร้อม Excel</div>
+        <button class="btn-primary" style="width:100%;" onclick="exportCSV('annual')">📥 Download CSV</button>
       </div>
-      <div class="card">
-        <div class="card-title">🏭 ความครอบคลุมการตรวจ (รายแผนก)</div>
-        ${depts.map((d,i) => `<div class="dept-row">
-          <div class="dept-nm">${d}</div>
-          <div class="dept-track"><div class="dept-fill" style="width:${deptPcts[i]}%;background:${deptColors[i]};"></div></div>
-          <div class="dept-pct" style="color:${deptColors[i]}">${deptPcts[i]}%</div>
-        </div>`).join('')}
-        <div style="font-size:11px;color:var(--sub);margin-top:8px;">* ข้อมูลจากฐานข้อมูล Supabase จริง</div>
+      <div class="card" style="text-align:center;padding:28px;">
+        <div style="font-size:44px;margin-bottom:12px;">⚠️</div>
+        <div style="font-family:'Prompt',sans-serif;font-weight:700;font-size:15px;margin-bottom:6px;">ผลตรวจปัจจัยเสี่ยง</div>
+        <div style="font-size:12px;color:var(--sub);margin-bottom:16px;">ข้อมูลทั้งหมดเป็น CSV</div>
+        <button class="btn-primary" style="width:100%;" onclick="exportCSV('risk')">📥 Download CSV</button>
+      </div>
+      <div class="card" style="text-align:center;padding:28px;grid-column:1/-1;">
+        <div style="font-size:44px;margin-bottom:12px;">📄</div>
+        <div style="font-family:'Prompt',sans-serif;font-weight:700;font-size:15px;margin-bottom:6px;">รายงานสรุปองค์กร (HTML)</div>
+        <div style="font-size:12px;color:var(--sub);margin-bottom:16px;">รายงานสำหรับผู้บริหารและส่งหน่วยงาน</div>
+        <button class="btn-gold" style="padding:10px 28px;" onclick="exportSummaryReport()">📋 สร้างรายงาน</button>
       </div>
     </div>`;
-  } catch(e) {
-    el.innerHTML = `<div class="empty"><div class="empty-ico">⚠️</div><h3>${e.message}</h3></div>`;
+
+  } else if (adminTab === 'passwd') {
+    if (!allEmployees.length) { const { data } = await sb.from('employees').select('emp_id,full_name').order('emp_id'); allEmployees = data||[]; }
+    el.innerHTML = `
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">🔑 คู่มือรีเซ็ตรหัสผ่าน</div>
+        ${[['1️⃣','เปิด Supabase Dashboard','supabase.com → เข้า Project'],['2️⃣','ไปที่ Table Editor','เมนูซ้าย → Table Editor'],['3️⃣','เลือกตาราง employees','คลิก employees'],['4️⃣','ค้นหาพนักงาน','Filter ด้วย emp_id'],['5️⃣','แก้ไข password_hash','คลิก Edit → พิมพ์รหัสใหม่'],['6️⃣','กด Save','พนักงานใช้รหัสใหม่ได้ทันที']].map(([n,t,d])=>`
+          <div style="display:flex;gap:12px;margin-bottom:12px;padding:12px;background:var(--bg);border-radius:9px;">
+            <div style="font-size:20px">${n}</div><div><div style="font-weight:700;font-size:13px;">${t}</div><div style="font-size:12px;color:var(--sub);margin-top:2px">${d}</div></div>
+          </div>`).join('')}
+      </div>
+      <div class="card">
+        <div class="card-title">⚡ รีเซ็ตด่วนจากระบบ</div>
+        <div class="fg" style="margin-bottom:12px;"><label class="fl">เลือกพนักงาน</label>
+          <select class="fi" id="reset-emp-sel">
+            <option value="">— เลือกพนักงาน —</option>
+            ${allEmployees.map(e=>`<option value="${e.emp_id}">${e.emp_id} — ${e.full_name}</option>`).join('')}
+          </select>
+        </div>
+        <div class="fg" style="margin-bottom:16px;"><label class="fl">รหัสผ่านใหม่</label>
+          <input class="fi" type="text" id="reset-new-pw" placeholder="ตั้งรหัสใหม่">
+        </div>
+        <button class="btn-gold" style="width:100%;" onclick="quickResetPass()">🔑 รีเซ็ตรหัสผ่าน</button>
+        <div class="alert-warn" style="margin-top:14px;font-size:12px;">⚠️ แจ้งพนักงานเปลี่ยนรหัสหลังได้รับรหัสใหม่</div>
+      </div>
+    </div>`;
   }
 }
 
-// ===== OVERVIEW (Risk module - Admin only) =====
-async function loadOverview() {
-  if (currentUser.role !== 'admin') return;
-  const el = document.getElementById('overview-content');
-  el.innerHTML = '<div class="loading"><span class="spinner"></span>กำลังโหลด...</div>';
-  const [empRes, annualRes, riskRes] = await Promise.all([
-    sb.from('employees').select('id,department,role').eq('role','employee'),
-    sb.from('annual_checkup').select('emp_id,checkup_year,bmi,bp_systolic,fbs,total_cholesterol').eq('checkup_year',2567),
-    sb.from('risk_checkup').select('emp_id,checkup_year,overall_result,risk_type').eq('checkup_year',2567),
-  ]);
-  const emps = empRes.data||[]; const annual = annualRes.data||[]; const risk = riskRes.data||[];
-  const total = emps.length||142; const checked = annual.length;
-  const overBMI = annual.filter(r=>r.bmi>23).length;
-  const highBP = annual.filter(r=>r.bp_systolic>130).length;
-  const highChol = annual.filter(r=>r.total_cholesterol>200).length;
-  const highFBS = annual.filter(r=>r.fbs>100).length;
+function openAddEmpModal() {
   const depts = ['แผนกก่อสร้าง','แผนกปฏิบัติการ','แผนกมิเตอร์','แผนกคลังพัสดุ','แผนกบัญชี','แผนกสนับสนุน','แผนกบริการลูกค้า'];
-  const deptPcts = [100,95,100,88,100,92,100];
-  el.innerHTML = `
+  openModal('👤 เพิ่มพนักงานใหม่', `
+    <div class="grid-form">
+      <div class="fg"><label class="fl">รหัสพนักงาน</label><input class="fi" type="text" id="m-empid" placeholder="EMP007"></div>
+      <div class="fg"><label class="fl">ชื่อ-นามสกุล</label><input class="fi" type="text" id="m-name" placeholder="นายสมชาย ดีมาก"></div>
+      <div class="fg"><label class="fl">แผนก</label><select class="fi" id="m-dept">${depts.map(d=>`<option>${d}</option>`).join('')}</select></div>
+      <div class="fg"><label class="fl">บทบาท</label><select class="fi" id="m-role"><option value="employee">พนักงาน</option><option value="admin">Admin</option></select></div>
+      <div class="fg"><label class="fl">เพศ</label><select class="fi" id="m-gender"><option value="male">ชาย</option><option value="female">หญิง</option></select></div>
+      <div class="fg"><label class="fl">รหัสผ่านเริ่มต้น</label><input class="fi" type="text" id="m-pass" value="1234"></div>
+    </div>
+    <div class="btn-row"><button class="btn-primary" onclick="saveNewEmp()">💾 บันทึก</button><button class="btn-sec" onclick="closeModal()">ยกเลิก</button></div>`);
+}
+
+async function saveNewEmp() {
+  const payload = { emp_id: document.getElementById('m-empid').value.trim().toUpperCase(), full_name: document.getElementById('m-name').value.trim(), department: document.getElementById('m-dept').value, role: document.getElementById('m-role').value, gender: document.getElementById('m-gender').value, password_hash: document.getElementById('m-pass').value };
+  if (!payload.emp_id || !payload.full_name) { showNotif('❗ กรอกรหัสและชื่อให้ครบ','error'); return; }
+  const { error } = await sb.from('employees').insert(payload);
+  if (error) { showNotif('❌ ' + error.message,'error'); return; }
+  showNotif('✅ เพิ่มพนักงานเรียบร้อย','success'); closeModal(); loadAdmin();
+}
+
+function openEditEmpModal(empId) {
+  const e = allEmployees.find(x => x.emp_id === empId); if (!e) return;
+  const depts = ['แผนกก่อสร้าง','แผนกปฏิบัติการ','แผนกมิเตอร์','แผนกคลังพัสดุ','แผนกบัญชี','แผนกสนับสนุน','แผนกบริการลูกค้า'];
+  openModal('✏️ แก้ไขข้อมูลพนักงาน', `
+    <div class="grid-form">
+      <div class="fg"><label class="fl">รหัสพนักงาน</label><input class="fi" value="${e.emp_id}" disabled></div>
+      <div class="fg"><label class="fl">ชื่อ-นามสกุล</label><input class="fi" type="text" id="me-name" value="${e.full_name}"></div>
+      <div class="fg"><label class="fl">แผนก</label><select class="fi" id="me-dept">${depts.map(d=>`<option ${d===e.department?'selected':''}>${d}</option>`).join('')}</select></div>
+      <div class="fg"><label class="fl">บทบาท</label><select class="fi" id="me-role"><option value="employee" ${e.role==='employee'?'selected':''}>พนักงาน</option><option value="admin" ${e.role==='admin'?'selected':''}>Admin</option></select></div>
+    </div>
+    <div class="btn-row"><button class="btn-primary" onclick="saveEditEmp('${e.emp_id}')">💾 บันทึก</button><button class="btn-sec" onclick="closeModal()">ยกเลิก</button></div>`);
+}
+
+async function saveEditEmp(empId) {
+  const payload = { full_name: document.getElementById('me-name').value.trim(), department: document.getElementById('me-dept').value, role: document.getElementById('me-role').value };
+  const { error } = await sb.from('employees').update(payload).eq('emp_id', empId);
+  if (error) { showNotif('❌ '+error.message,'error'); return; }
+  showNotif('✅ แก้ไขข้อมูลเรียบร้อย','success'); closeModal(); loadAdmin();
+}
+
+function resetPassword(empId, name) {
+  openModal('🔑 รีเซ็ตรหัสผ่าน', `
+    <p style="margin-bottom:16px;font-size:14px;">รีเซ็ตรหัสผ่านของ <strong>${name}</strong> (${empId})</p>
+    <div class="fg" style="margin-bottom:16px;"><label class="fl">รหัสผ่านใหม่</label><input class="fi" type="text" id="rp-pass" value="1234"></div>
+    <div class="btn-row"><button class="btn-gold" onclick="doResetPass('${empId}')">🔑 รีเซ็ต</button><button class="btn-sec" onclick="closeModal()">ยกเลิก</button></div>`);
+}
+
+async function doResetPass(empId) {
+  const newPass = document.getElementById('rp-pass').value;
+  if (!newPass) { showNotif('❗ กรอกรหัสผ่านใหม่','error'); return; }
+  const { error } = await sb.from('employees').update({ password_hash: newPass }).eq('emp_id', empId);
+  if (error) { showNotif('❌ '+error.message,'error'); return; }
+  showNotif(`✅ รีเซ็ต ${empId} เรียบร้อย — รหัสใหม่: ${newPass}`,'success'); closeModal();
+}
+
+async function quickResetPass() {
+  const empId = document.getElementById('reset-emp-sel').value;
+  const newPass = document.getElementById('reset-new-pw').value;
+  if (!empId||!newPass) { showNotif('❗ เลือกพนักงานและกรอกรหัสใหม่','error'); return; }
+  const { error } = await sb.from('employees').update({ password_hash: newPass }).eq('emp_id', empId);
+  if (error) { showNotif('❌ '+error.message,'error'); return; }
+  showNotif(`✅ รีเซ็ต ${empId} เรียบร้อย!`,'success');
+  document.getElementById('reset-new-pw').value = '';
+}
+
+async function exportCSV(type) {
+  const table = type==='annual'?'annual_checkup':'risk_checkup';
+  const { data } = await sb.from(table).select('*,employees(full_name,department)').order('checkup_year',{ascending:false});
+  if (!data?.length) { showNotif('❌ ไม่มีข้อมูล','error'); return; }
+  const skip = new Set(['employees']);
+  const keys = Object.keys(data[0]).filter(k=>!skip.has(k));
+  const rows = [['ชื่อ','แผนก',...keys], ...data.map(r=>[r.employees?.full_name||r.emp_id, r.employees?.department||'—', ...keys.map(k=>r[k]??'')])];
+  const csv = rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}));
+  a.download = `PEA_Pattani_${type}_${new Date().getFullYear()}.csv`; a.click();
+  showNotif('📥 ดาวน์โหลด CSV เรียบร้อย!','success');
+}
+
+async function exportSummaryReport() {
+  const { data: annual } = await sb.from('annual_checkup').select('*,employees(full_name,department)').order('checkup_year',{ascending:false});
+  const n = annual?.length||0;
+  const html = `<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>รายงานสุขภาพ PEA Pattani</title><style>body{font-family:sans-serif;padding:30px;color:#111;}h1{color:#3B0764;}h2{color:#6B21A8;}table{width:100%;border-collapse:collapse;margin-top:20px;font-size:13px;}th{background:#6B21A8;color:white;padding:9px 12px;text-align:left;}td{padding:8px 12px;border:1px solid #ddd;}tr:nth-child(even) td{background:#F5F3FF;}.sum{display:inline-block;margin:6px 12px 6px 0;padding:8px 16px;border-radius:8px;background:#EDE9FE;font-weight:bold;}</style></head><body>
+
+  <h1>⚡ รายงานผลตรวจสุขภาพ</h1><h2>การไฟฟ้าส่วนภูมิภาค สาขาปัตตานี</h2>
+  <p>วันที่พิมพ์: ${new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'})} | ผู้เข้าตรวจ: <strong>${n} คน</strong></p>
+  <div><span class="sum">BMI≥23: ${(annual||[]).filter(r=>r.bmi>=23).length} คน</span><span class="sum">ความดัน≥130: ${(annual||[]).filter(r=>r.bp_systolic>=130).length} คน</span><span class="sum">FBS≥100: ${(annual||[]).filter(r=>r.fbs>=100).length} คน</span><span class="sum">Chol≥200: ${(annual||[]).filter(r=>r.total_cholesterol>=200).length} คน</span></div>
+  <table><thead><tr><th>ชื่อ</th><th>แผนก</th><th>ปี</th><th>BMI</th><th>ความดัน</th><th>FBS</th><th>คอเลสเตอรอล</th><th>AST/ALT</th><th>คะแนน</th></tr></thead>
+  <tbody>${(annual||[]).map(r=>`<tr><td>${r.employees?.full_name||r.emp_id}</td><td>${r.employees?.department||'—'}</td><td>${r.checkup_year}</td><td>${r.bmi||'—'}</td><td>${r.bp_systolic||'—'}/${r.bp_diastolic||'—'}</td><td>${r.fbs||'—'}</td><td>${r.total_cholesterol||'—'}</td><td>${r.sgot||'—'}/${r.sgpt||'—'}</td><td>${r.ai_score||'—'}</td></tr>`).join('')}
+  </tbody></table></body></html>`;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8;'}));
+  a.download = 'PEA_Pattani_HealthReport.html'; a.click();
+  showNotif('📄 สร้างรายงาน HTML เรียบร้อย!','success');
+}
+
+async function adminEditAnnual(id) {
+const { data, error } = await sb.from(‘annual_checkup’).select(’*’).eq(‘id’, id).single();
+if (error||!data) { showNotif(‘❌ โหลดข้อมูลไม่ได้’,‘error’); return; }
+annualData = [data];
+editAnnual(data);
+}
+
+// ===== ORG HEALTH =====
+async function loadOrgHealth() {
+const el = document.getElementById(‘org-health-content’);
+el.innerHTML = ‘<div class="loading"><span class="spinner"></span>กำลังโหลดข้อมูล…</div>’;
+try {
+const [annualRes, empRes] = await Promise.all([
+sb.from(‘annual_checkup’).select(‘bmi,bp_systolic,fbs,total_cholesterol,hdl,triglyceride,sgot,sgpt,creatinine,ekg_result,xray_result,checkup_year’).eq(‘checkup_year’, new Date().getFullYear()+543-1),
+sb.from(‘employees’).select(‘id’).eq(‘role’,‘employee’),
+]);
+const annual = annualRes.data||[], total = empRes.data?.length||142, n = annual.length;
+if (!n) { el.innerHTML=’<div class="empty"><div class="empty-ico">📊</div><h3>ยังไม่มีข้อมูลผลตรวจปีนี้</h3></div>’; return; }
+const pct = c => n>0?Math.round(c/n*100):0;
+const stats = [
+{icon:‘⚖️’,label:‘น้ำหนักเกิน (BMI≥23)’,n:annual.filter(r=>r.bmi>=23).length},
+{icon:‘🩸’,label:‘ความดันสูง (≥130)’,n:annual.filter(r=>r.bp_systolic>=130).length},
+{icon:‘🍬’,label:‘น้ำตาลเสี่ยง (FBS≥100)’,n:annual.filter(r=>r.fbs>=100).length},
+{icon:‘💛’,label:‘คอเลสเตอรอลสูง (≥200)’,n:annual.filter(r=>r.total_cholesterol>=200).length},
+{icon:‘🧡’,label:‘TG สูง (≥150)’,n:annual.filter(r=>r.triglyceride>=150).length},
+{icon:‘🫁’,label:‘ตับผิดปกติ (AST/ALT>40)’,n:annual.filter(r=>(r.sgot>40||r.sgpt>40)).length},
+{icon:‘🫘’,label:‘ไตผิดปกติ (Cr>1.2)’,n:annual.filter(r=>r.creatinine>1.2).length},
+{icon:‘❤️’,label:‘EKG ผิดปกติ’,n:annual.filter(r=>r.ekg_result&&!r.ekg_result.includes(‘ปกติ’)&&r.ekg_result!==‘ไม่ได้ตรวจ’).length},
+];
+const depts=[‘แผนกก่อสร้าง’,‘แผนกปฏิบัติการ’,‘แผนกมิเตอร์’,‘แผนกคลังพัสดุ’,‘แผนกบัญชี’,‘แผนกสนับสนุน’,‘แผนกบริการลูกค้า’];
+const dpc=[100,95,100,88,100,92,100];
+el.innerHTML=` <div class="grid-3" style="margin-bottom:18px;"> <div class="ov-card"><div class="ov-num" style="color:var(--pea-purple)">${total}</div><div class="ov-lbl">พนักงานทั้งหมด</div></div> <div class="ov-card"><div class="ov-num" style="color:var(--info)">${n}</div><div class="ov-lbl">เข้ารับตรวจแล้ว</div><div style="font-size:12px;color:var(--sub);margin-top:3px">${pct(n)}%</div></div> <div class="ov-card"><div class="ov-num" style="color:var(--warning)">${annual.filter(r=>r.bmi>=23||r.bp_systolic>=130||r.fbs>=100||r.total_cholesterol>=200).length}</div><div class="ov-lbl">พบความผิดปกติ ≥1 รายการ</div></div> </div> <div class="grid-2"> <div class="card"><div class="card-title">⚠️ สัดส่วนค่าผิดเกณฑ์ (จาก ${n} คน)</div> ${stats.map(s=>{const p=pct(s.n),c=p>=30?'#DC2626':p>=15?'#D97706':'#6B21A8';return`<div class="dept-row"><div style="font-size:12px;width:175px;flex-shrink:0">${s.icon} ${s.label}</div><div class="dept-track"><div class="dept-fill" style="width:${Math.min(p,100)}%;background:${c}"></div></div><div style="font-size:12px;font-weight:700;color:${c};width:45px;text-align:right">${s.n} คน</div><div style="font-size:11px;color:var(--sub);width:32px;text-align:right">${p}%</div></div>`;}).join('')} </div> <div class="card"><div class="card-title">🏭 ความครอบคลุม (รายแผนก)</div> ${depts.map((d,i)=>`<div class="dept-row"><div class="dept-nm">${d}</div><div class="dept-track"><div class="dept-fill" style="width:${dpc[i]}%;background:${dpc[i]>=95?'var(--pea-purple)':'#D97706'}"></div></div><div class="dept-pct" style="color:${dpc[i]>=95?'var(--pea-purple)':'#92400E'}">${dpc[i]}%</div></div>`).join('')} </div> </div>`;
+} catch(e) { el.innerHTML=`<div class="empty"><div class="empty-ico">⚠️</div><h3>${e.message}</h3></div>`; }
+}
+
+// ===== OVERVIEW Risk Admin =====
+async function loadOverview() {
+if (currentUser.role !== ‘admin’) return;
+const el = document.getElementById(‘overview-content’);
+el.innerHTML = ‘<div class="loading"><span class="spinner"></span>กำลังโหลด…</div>’;
+const { data: risk } = await sb.from(‘risk_checkup’).select(’*,employees(full_name,department)’).order(‘checkup_year’,{ascending:false}).limit(100);
+const { data: emps } = await sb.from(‘employees’).select(‘id’).eq(‘role’,‘employee’);
+const total = emps?.length||142; const r = risk||[];
+const depts=[‘แผนกก่อสร้าง’,‘แผนกปฏิบัติการ’,‘แผนกมิเตอร์’,‘แผนกคลังพัสดุ’,‘แผนกบัญชี’,‘แผนกสนับสนุน’,‘แผนกบริการลูกค้า’];
+const dpc=[100,95,100,88,100,92,100];
+el.innerHTML=`
+
   <div class="grid-3" style="margin-bottom:18px;">
     <div class="ov-card"><div class="ov-num" style="color:var(--pea-purple)">${total}</div><div class="ov-lbl">พนักงานทั้งหมด</div></div>
-    <div class="ov-card"><div class="ov-num" style="color:var(--info)">${checked||'—'}</div><div class="ov-lbl">เข้ารับตรวจแล้ว ปี 2567</div>${checked?`<div style="font-size:11px;color:var(--sub);margin-top:3px">${Math.round(checked/total*100)}%</div>`:''}</div>
-    <div class="ov-card"><div class="ov-num" style="color:var(--warning)">${annual.filter(r=>r.bmi>25||r.bp_systolic>130||r.fbs>100||r.total_cholesterol>200).length||'—'}</div><div class="ov-lbl">พบความผิดปกติ</div></div>
+    <div class="ov-card"><div class="ov-num" style="color:var(--info)">${r.length}</div><div class="ov-lbl">รายการตรวจปัจจัยเสี่ยง</div></div>
+    <div class="ov-card"><div class="ov-num" style="color:var(--danger)">${r.filter(x=>x.overall_result&&x.overall_result!=='ปกติ').length}</div><div class="ov-lbl">พบความผิดปกติ</div></div>
   </div>
   <div class="grid-2">
-    <div class="card"><div class="card-title">🏭 ความครอบคลุมการตรวจ (รายแผนก)</div>
-      ${depts.map((d,i)=>`<div class="dept-row"><div class="dept-nm">${d}</div><div class="dept-track"><div class="dept-fill" style="width:${deptPcts[i]}%;background:${deptPcts[i]>=95?'var(--pea-purple)':'#D97706'}"></div></div><div class="dept-pct" style="color:${deptPcts[i]>=95?'var(--pea-purple)':'#92400E'}">${deptPcts[i]}%</div></div>`).join('')}
+    <div class="card"><div class="card-title">🏭 ความครอบคลุมตรวจปัจจัยเสี่ยง (รายแผนก)</div>
+      ${depts.map((d,i)=>`<div class="dept-row"><div class="dept-nm">${d}</div><div class="dept-track"><div class="dept-fill" style="width:${dpc[i]}%;background:${dpc[i]>=95?'var(--pea-purple)':'#D97706'}"></div></div><div class="dept-pct" style="color:${dpc[i]>=95?'var(--pea-purple)':'#92400E'}">${dpc[i]}%</div></div>`).join('')}
     </div>
-    <div class="card"><div class="card-title">⚠️ ปัจจัยเสี่ยงที่พบ (สุขภาพประจำปี)</div>
-      ${[['🏋️ BMI≥23','น้ำหนักเกิน',overBMI||52,'#D97706'],['🩸 ความดัน≥130','Pre-HT/HT',highBP||31,'#DC2626'],['💛 Cholesterol≥200','ไขมันสูง',highChol||28,'#D97706'],['🍬 FBS≥100','เสี่ยงเบาหวาน',highFBS||14,'#B45309']].map(([nm,sb2,n,c])=>`<div class="risk-row"><div><div class="risk-nm">${nm}</div><div class="risk-sb">${sb2}</div></div><div style="text-align:right"><div class="risk-num" style="color:${c}">${n}</div><div class="risk-sb">คน</div></div></div>`).join('')}
+    <div class="card"><div class="card-title">⚠️ ผลตรวจล่าสุดรายบุคคล</div>
+      ${r.slice(0,8).map(x=>`<div class="risk-row"><div><div class="risk-nm">${x.employees?.full_name||x.emp_id}</div><div class="risk-sb">${x.employees?.department||''} · ปี ${x.checkup_year}</div></div><span class="badge ${x.overall_result==='ปกติ'?'b-ok':'b-warn'}">${x.overall_result||'—'}</span></div>`).join('')}
     </div>
   </div>`;
 }
 
 // ===== HELPERS =====
 function dateTH(d) {
-  if (!d) return '—';
-  const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-  const dt = new Date(d);
-  return `${dt.getDate()} ${months[dt.getMonth()]} ${dt.getFullYear()+543}`;
+if (!d) return ‘—’;
+const months = [‘ม.ค.’,‘ก.พ.’,‘มี.ค.’,‘เม.ย.’,‘พ.ค.’,‘มิ.ย.’,‘ก.ค.’,‘ส.ค.’,‘ก.ย.’,‘ต.ค.’,‘พ.ย.’,‘ธ.ค.’];
+const dt = new Date(d);
+return `${dt.getDate()} ${months[dt.getMonth()]} ${dt.getFullYear()+543}`;
 }
-function showNotif(msg, type='success') {
-  const el = document.getElementById('notif');
-  el.textContent = msg; el.className = `notif notif-${type}`;
-  el.style.display = 'block';
-  setTimeout(() => el.style.display='none', 3500);
+function showNotif(msg, type=‘success’) {
+const el = document.getElementById(‘notif’);
+el.textContent = msg; el.className = `notif notif-${type}`;
+el.style.display = ‘block’;
+setTimeout(() => el.style.display=‘none’, 3500);
 }
 </script>
 
