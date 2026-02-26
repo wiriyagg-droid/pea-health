@@ -718,25 +718,26 @@ function saveConfig() {
   const key = document.getElementById('sb-key').value.trim();
   const aik = document.getElementById('ai-key').value.trim();
   if (!url || !key) { alert('กรุณากรอก URL และ Key'); return; }
-  localStorage.setItem('sb_url', url);
-  localStorage.setItem('sb_key', key);
-  if (aik) localStorage.setItem('ai_key', aik);
+  try { localStorage.setItem('sb_url', url); localStorage.setItem('sb_key', key); if (aik) localStorage.setItem('ai_key', aik); } catch(e) {}
+  window._sbUrl = url; window._sbKey = key; window._aiKey = aik;
+  if (!window.supabase) { alert('Supabase ยังโหลดไม่เสร็จ รอสักครู่แล้วลองใหม่'); return; }
   sb = window.supabase.createClient(url, key);
   document.getElementById('config-banner').style.display = 'none';
   showNotif('✅ บันทึกการตั้งค่าเรียบร้อย', 'success');
 }
 
 window.onload = () => {
-  const url = localStorage.getItem('sb_url');
-  const key = localStorage.getItem('sb_key');
-  if (url && key) {
-    document.getElementById('sb-url').value = url;
-    document.getElementById('sb-key').value = key;
-    const aik = localStorage.getItem('ai_key');
-    if (aik) document.getElementById('ai-key').value = aik;
-    sb = window.supabase.createClient(url, key);
-    document.getElementById('config-banner').style.display = 'none';
-  }
+  try {
+    const url = localStorage.getItem('sb_url');
+    const key = localStorage.getItem('sb_key');
+    if (url && key) {
+      document.getElementById('sb-url').value = url;
+      document.getElementById('sb-key').value = key;
+      const aik = localStorage.getItem('ai_key');
+      if (aik) document.getElementById('ai-key').value = aik;
+      if (window.supabase) { sb = window.supabase.createClient(url, key); document.getElementById('config-banner').style.display = 'none'; }
+    }
+  } catch(e) {}
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('f-date').value = today;
   document.getElementById('rf-date').value = today;
