@@ -4051,7 +4051,7 @@ async function exportRiskReportPDF() {
     // สร้าง HTML สำหรับ PDF
     const now = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
     const html = `
-    <div id="risk-pdf-doc" style="width:794px;background:#fff;font-family:'Sarabun','Prompt',sans-serif;font-size:13px;color:#1f2937;padding:40px 50px;box-sizing:border-box;">
+    <div id="risk-pdf-doc" style="width:794px;background:#fff;font-family:'Sarabun','Prompt',sans-serif;font-size:13px;color:#1f2937;padding:94px 50px;box-sizing:border-box;">
 
       <!-- หัวรายงาน + โลโก้ -->
       <div style="text-align:center;border-bottom:3px solid #6D28D9;padding-bottom:14px;margin-bottom:20px;">
@@ -4187,8 +4187,8 @@ async function exportRiskReportPDF() {
     tmp.innerHTML = html;
 
     const doc = tmp.querySelector('#risk-pdf-doc');
-    const canvas = await html2canvas(doc, { scale: 1.5, useCORS: true, backgroundColor: '#ffffff', windowWidth: 794 });
-    const imgData = canvas.toDataURL('image/jpeg', 0.92);
+    const canvas = await html2canvas(doc, { scale: 2.5, useCORS: true, backgroundColor: '#ffffff', windowWidth: 794 });
+    const imgData = canvas.toDataURL('image/jpeg', 0.97);
 
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
