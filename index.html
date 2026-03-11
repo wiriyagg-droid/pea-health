@@ -1433,7 +1433,7 @@ function enterApp(data) {
     document.getElementById('nv-org-health').style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('nv-admin-annual').style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('nv-chpw-annual').style.display = isAdmin ? 'none' : 'flex';
-    document.getElementById('nv-export-pdf').style.display = isAdmin ? 'none' : 'flex';
+    document.getElementById('nv-export-pdf').style.display = 'flex';
   }
   document.getElementById('login-screen').classList.remove('active');
   document.getElementById('main-screen').classList.add('active');
