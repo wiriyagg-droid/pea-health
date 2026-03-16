@@ -331,7 +331,6 @@ body { font-family:'Sarabun',sans-serif; background:var(--bg); color:var(--text)
 .btn-print:hover { opacity: .9; }
 
 /* ===== PDPA CONSENT MODAL ===== */
-#pdpa-action-modal.active { display:flex !important; }
 #pdpa-overlay {
   display:none; position:fixed; inset:0; z-index:9999;
   background:rgba(10,5,30,0.82); backdrop-filter:blur(6px);
@@ -419,24 +418,6 @@ body { font-family:'Sarabun',sans-serif; background:var(--bg); color:var(--text)
 </div>
 
 <!-- ===== PDPA CONSENT MODAL ===== -->
-
-<!-- PDPA Action Confirm Modal (ยืนยัน 2 ชั้น) -->
-<div id="pdpa-action-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;">
-  <div style="background:#fff;border-radius:16px;padding:32px;max-width:440px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2);">
-    <div style="font-size:18px;font-weight:700;margin-bottom:12px;" id="pdpa-action-title"></div>
-    <div style="font-size:14px;line-height:1.6;margin-bottom:20px;padding:14px;background:#F9FAFB;border-radius:10px;" id="pdpa-action-desc"></div>
-    <div style="font-size:13px;color:var(--sub);margin-bottom:8px;" id="pdpa-action-hint"></div>
-    <input id="pdpa-action-input" type="text" placeholder="พิมพ์รหัสพนักงาน..."
-      style="width:100%;padding:10px 14px;border:1.5px solid #D1D5DB;border-radius:8px;font-size:14px;box-sizing:border-box;margin-bottom:20px;"
-      oninput="this.style.border='1.5px solid #D1D5DB'"
-      onkeydown="if(event.key==='Enter') confirmPdpaAction()">
-    <div style="display:flex;gap:10px;justify-content:flex-end;">
-      <button onclick="closePdpaActionModal()" style="padding:9px 20px;border-radius:8px;border:1.5px solid #D1D5DB;background:#fff;font-size:13px;cursor:pointer;">ยกเลิก</button>
-      <button id="pdpa-action-confirm-btn" onclick="confirmPdpaAction()" style="padding:9px 20px;border-radius:8px;border:none;color:#fff;font-size:13px;cursor:pointer;font-weight:600;"></button>
-    </div>
-  </div>
-</div>
-
 <div id="pdpa-overlay">
   <div class="pdpa-modal">
     <!-- Header -->
@@ -969,7 +950,15 @@ body { font-family:'Sarabun',sans-serif; background:var(--bg); color:var(--text)
           <div class="grid-form-3">
             <div class="fg"><label class="fl">FVC (% predicted)</label><input class="fi" type="number" step="0.1" id="rf-fvc"><div class="not-tested-wrap"><input type="checkbox" id="nt-lung" onchange="['rf-fvc','rf-fev1'].forEach(x=>toggleField(x,'nt-lung'))"><label for="nt-lung">ไม่ได้ตรวจ</label></div></div>
             <div class="fg"><label class="fl">FEV1 (% predicted)</label><input class="fi" type="number" step="0.1" id="rf-fev1"></div>
-            <div class="fg"><label class="fl">ผลสมรรถภาพปอด</label><select class="fi" id="rf-lres"><option>ปกติ</option><option>Restrictive pattern</option><option>Obstructive pattern</option><option>Mixed pattern</option><option>ไม่ได้ตรวจ</option></select></div>
+            <div class="fg"><label class="fl">ผลสมรรถภาพปอด</label><select class="fi" id="rf-lres"><option>ปกติ</option><option>Restrictive pattern (ข้อจำกัดการพองตัวของปอด)</option><option>Obstructive pattern (การอุดกั้นทางเดินหายใจ)</option><option>Mixed pattern (ทั้งอุดกั้นและข้อจำกัดร่วมกัน)</option></select></div>
+          </div>
+          <div class="sec-title">👁️ สายตา (Visual Examination)</div>
+          <div class="form-grid">
+            <div class="fg"><label class="fl">Visual Acuity ระยะไกล</label><input class="fi" type="text" id="rf-va-far" placeholder="เช่น 6/6, 6/9, 20/20"><div class="not-tested-wrap"><input type="checkbox" id="nt-va" onchange="['rf-va-far','rf-va-near'].forEach(x=>toggleField(x,'nt-va'))"><label for="nt-va">ไม่ได้ตรวจ</label></div></div>
+            <div class="fg"><label class="fl">Visual Acuity ระยะใกล้</label><input class="fi" type="text" id="rf-va-near" placeholder="เช่น N6, N8, J1"></div>
+            <div class="fg"><label class="fl">Color Vision (ตาบอดสี)</label><select class="fi" id="rf-color-vision"><option>ปกติ</option><option>ผิดปกติ — ตาบอดสีบางส่วน</option><option>ผิดปกติ — ตาบอดสีทั้งหมด</option><option>ไม่ได้ตรวจ</option></select></div>
+            <div class="fg"><label class="fl">Stereopsis (การมองภาพ 3 มิติ)</label><select class="fi" id="rf-stereopsis"><option>ปกติ</option><option>ผิดปกติ</option><option>ไม่ได้ตรวจ</option></select></div>
+            <div class="fg"><label class="fl">External Eye Examination (ตรวจความผิดปกติจาก UV)</label><select class="fi" id="rf-eye-ext"><option>ปกติ</option><option>ผิดปกติ — Pterygium (เนื้องอกตา)</option><option>ผิดปกติ — Cataract (ต้อกระจก)</option><option>ผิดปกติ — อื่นๆ</option><option>ไม่ได้ตรวจ</option></select></div>
           </div>
           <div class="sec-title">⚗️ สารเคมี</div>
           <div class="grid-form">
@@ -1345,7 +1334,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ===== PDPA CONSENT MANAGEMENT =====
 let pendingUserData = null; // เก็บข้อมูล user ไว้รอหลัง consent
 
-async function showPdpaModal(userData) {
+function showPdpaModal(userData) {
   pendingUserData = userData;
 
   // ตรวจสอบว่าเคย consent แล้วหรือยัง
@@ -1355,22 +1344,8 @@ async function showPdpaModal(userData) {
   if (savedConsent) {
     try {
       const c = JSON.parse(savedConsent);
+      // ✅ เคยยินยอมแล้ว → เข้าแอปได้เลย ไม่ต้องแสดง modal
       if (c.main === true) {
-        // ✅ มี localStorage → ตรวจ Supabase ว่าถูกถอนไปแล้วหรือยัง
-        if (sb) {
-          const { data: rec } = await sb.from('pdpa_consents')
-            .select('consent_main,withdrawn_at')
-            .eq('emp_id', userData.emp_id)
-            .maybeSingle();
-          if (rec && rec.withdrawn_at) {
-            // 🔒 ถูกถอนแล้ว → ลบ localStorage แล้วบังคับให้ยินยอมใหม่
-            localStorage.removeItem('pdpa_consent_' + userData.emp_id);
-            const overlay = document.getElementById('pdpa-overlay');
-            overlay.classList.add('active');
-            showNotif('⚠️ ความยินยอม PDPA ของคุณถูกถอน กรุณายินยอมใหม่', 'error');
-            return;
-          }
-        }
         enterApp(userData);
         showNotif(`✅ ยินดีต้อนรับ ${userData.full_name}`, 'success');
         pendingUserData = null;
@@ -2578,6 +2553,11 @@ async function saveRisk() {
     ekg_risk_result: document.getElementById('rf-ekg').value,
     creatinine_risk: parseFloat(document.getElementById('rf-cr').value)||null,
     bmi_risk: parseFloat(document.getElementById('rf-bmi').value)||null,
+    va_far: document.getElementById('rf-va-far').value||null,
+    va_near: document.getElementById('rf-va-near').value||null,
+    color_vision: document.getElementById('rf-color-vision').value,
+    stereopsis: document.getElementById('rf-stereopsis').value,
+    eye_external: document.getElementById('rf-eye-ext').value,
     overall_result: (function(){
       var bps=parseInt(document.getElementById('rf-bps').value)||null;
       var bpd=parseInt(document.getElementById('rf-bpd').value)||null;
@@ -2585,10 +2565,16 @@ async function saveRisk() {
       var fvc=parseFloat(document.getElementById('rf-fvc').value)||null;
       var ekg=document.getElementById('rf-ekg').value;
       var cr=parseFloat(document.getElementById('rf-cr').value)||null;
+      var cv=document.getElementById('rf-color-vision').value;
+      var stp=document.getElementById('rf-stereopsis').value;
+      var eex=document.getElementById('rf-eye-ext').value;
       var abn=(bps&&bps>=140)||(bpd&&bpd>=90)
         ||(hres&&hres!=='ปกติ'&&hres!=='ไม่ได้ตรวจ')
         ||(fvc&&fvc<80)||(ekg&&ekg!=='ปกติ'&&ekg!=='ไม่ได้ตรวจ')
-        ||(cr&&cr>1.2);
+        ||(cr&&cr>1.2)
+        ||(cv&&cv!=='ปกติ'&&cv!=='ไม่ได้ตรวจ')
+        ||(stp&&stp!=='ปกติ'&&stp!=='ไม่ได้ตรวจ')
+        ||(eex&&eex!=='ปกติ'&&eex!=='ไม่ได้ตรวจ');
       var warn=(bps&&bps>=130)||(bpd&&bpd>=80);
       return abn?'ผิดปกติ — ต้องติดตาม':warn?'เฝ้าระวัง':'ปกติ';
     })(),
@@ -2625,12 +2611,13 @@ async function loadMyRisk() {
   riskData = data || [];
   if (!riskData.length) { el.innerHTML = '<div class="empty"><div class="empty-ico">⚠️</div><h3>ยังไม่มีข้อมูล</h3><button class="btn-primary" style="margin-top:12px" onclick="goto(\'enter-risk\')">✏️ ลงข้อมูลเลย</button></div>'; return; }
   el.innerHTML = `<div class="card"><div class="card-title" style="justify-content:space-between;">⚠️ ประวัติตรวจปัจจัยเสี่ยง <button class="btn-primary" style="padding:6px 14px;font-size:12px;" onclick="goto('enter-risk')">+ ลงข้อมูลใหม่</button></div>
-  <div style="overflow-x:auto;"><table class="emp-table"><thead><tr><th>ปี</th><th>ความดัน</th><th>การได้ยิน</th><th>ปอด FVC</th><th>สารเคมี</th><th>EKG</th><th>ผลรวม</th><th>แก้ไข</th></tr></thead>
+  <div style="overflow-x:auto;"><table class="emp-table"><thead><tr><th>ปี</th><th>ความดัน</th><th>การได้ยิน</th><th>ปอด FVC</th><th>สายตา</th><th>สารเคมี</th><th>EKG</th><th>ผลรวม</th><th>แก้ไข</th></tr></thead>
   <tbody>${riskData.map(r=>`<tr>
     <td><strong>${r.checkup_year}</strong><br><span style="font-size:11px;color:var(--sub)">${r.checkup_date||''}</span></td>
     <td>${r.bp_systolic ? r.bp_systolic+'/'+r.bp_diastolic+' mmHg' : '—'}</td>
     <td>${r.hearing_result||'—'}<br><span style="font-size:11px;color:var(--sub)">${r.hearing_right||''}${r.hearing_right?'/':''} ${r.hearing_left||''} ${r.hearing_right||r.hearing_left?'dB':''}</span></td>
     <td>${r.fvc||'—'}${r.fvc?'%':''}<br><span style="font-size:11px;color:var(--sub)">${r.lung_result||'—'}</span></td>
+    <td style="font-size:11px">${r.va_far?'VA: '+r.va_far:'—'}<br><span style="color:var(--sub)">${r.color_vision&&r.color_vision!=='ไม่ได้ตรวจ'?r.color_vision==='ปกติ'?'สีปกติ':'⚠️สี':''}</span></td>
     <td style="font-size:12px">${r.chemical_test||'—'}</td>
     <td><span class="badge ${r.ekg_risk_result==='ปกติ'?'b-ok':r.ekg_risk_result&&r.ekg_risk_result!=='ไม่ได้ตรวจ'?'b-warn':'b-gray'}">${r.ekg_risk_result||'—'}</span></td>
     <td><span class="badge ${r.overall_result==='ปกติ'?'b-ok':'b-warn'}">${r.overall_result||'—'}</span></td>
@@ -2653,6 +2640,8 @@ function editRisk(id) {
     const setSelect = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
     setSelect('rf-hres', r.hearing_result); setSelect('rf-lres', r.lung_result);
     setSelect('rf-ekg', r.ekg_risk_result);
+    set('rf-va-far', r.va_far); set('rf-va-near', r.va_near);
+    setSelect('rf-color-vision', r.color_vision); setSelect('rf-stereopsis', r.stereopsis); setSelect('rf-eye-ext', r.eye_external);
     document.getElementById('btn-save-risk').textContent = '💾 บันทึกการแก้ไข';
     showNotif('📝 โหลดข้อมูลเดิมเรียบร้อย — แก้ไขแล้วกด บันทึก', 'success');
   }, 150);
@@ -2704,6 +2693,11 @@ async function loadRiskDash() {
         <tr><td>FVC</td><td>${d.fvc||'—'}${d.fvc?'%':''}</td><td>≥80% predicted</td><td>${fvcBadge(d.fvc)}</td></tr>
         <tr><td>FEV1</td><td>${d.fev1||'—'}${d.fev1?'%':''}</td><td>≥70%</td><td>${d.fev1?d.fev1>=70?'<span class="badge b-ok">ปกติ</span>':'<span class="badge b-warn">ลดลง</span>':'<span class="badge b-gray">—</span>'}</td></tr>
         <tr><td>ผลปอด</td><td colspan="2">${d.lung_result||'—'}</td><td>${lungBadge(d.lung_result)}</td></tr>
+        <tr><td colspan="4" style="background:#F0F9FF;font-weight:700;color:#0369A1;padding:8px 12px;">👁️ ผลตรวจสายตา</td></tr>
+        <tr><td>Visual Acuity</td><td>ไกล: ${d.va_far||'—'}</td><td>ใกล้: ${d.va_near||'—'}</td><td></td></tr>
+        <tr><td>Color Vision</td><td colspan="2">${d.color_vision||'—'}</td><td>${!d.color_vision||d.color_vision==='ไม่ได้ตรวจ'?'<span class="badge b-gray">ไม่ได้ตรวจ</span>':d.color_vision==='ปกติ'?'<span class="badge b-ok">ปกติ</span>':'<span class="badge b-warn">ผิดปกติ</span>'}</td></tr>
+        <tr><td>Stereopsis</td><td colspan="2">${d.stereopsis||'—'}</td><td>${!d.stereopsis||d.stereopsis==='ไม่ได้ตรวจ'?'<span class="badge b-gray">ไม่ได้ตรวจ</span>':d.stereopsis==='ปกติ'?'<span class="badge b-ok">ปกติ</span>':'<span class="badge b-warn">ผิดปกติ</span>'}</td></tr>
+        <tr><td>External Eye</td><td colspan="2">${d.eye_external||'—'}</td><td>${!d.eye_external||d.eye_external==='ไม่ได้ตรวจ'?'<span class="badge b-gray">ไม่ได้ตรวจ</span>':d.eye_external==='ปกติ'?'<span class="badge b-ok">ปกติ</span>':'<span class="badge b-warn">ผิดปกติ</span>'}</td></tr>
         <tr><td>สารเคมี</td><td>${d.chemical_test||'—'}: ${d.chemical_result||'—'} ${d.chemical_unit||''}</td><td>${d.chemical_reference||'—'}</td><td><span class="badge b-info">ดูผล</span></td></tr>
         <tr><td>EKG</td><td>${d.ekg_risk_result||'—'}</td><td>Normal Sinus Rhythm</td><td>${ekgBadge(d.ekg_risk_result)}</td></tr>
         <tr><td>Creatinine</td><td>${d.creatinine_risk||'—'}${d.creatinine_risk?' mg/dL':''}</td><td>0.7-1.2 mg/dL</td><td>${d.creatinine_risk?d.creatinine_risk<=1.2?'<span class="badge b-ok">ปกติ</span>':'<span class="badge b-warn">สูง</span>':'<span class="badge b-gray">—</span>'}</td></tr>
@@ -2781,102 +2775,43 @@ let adminTab = 'emp', allEmployees = [];
 // ===== ADMIN ANNUAL MODULE =====
 let annualAdminTab = 'emp';
 
-// === PDPA MODAL สำหรับยืนยัน 2 ชั้น ===
-function showPdpaConfirmModal(empId, fullName, action) {
-  // action: 'withdraw' | 'delete'
-  const modal = document.getElementById('pdpa-action-modal');
-  const title = document.getElementById('pdpa-action-title');
-  const desc = document.getElementById('pdpa-action-desc');
-  const input = document.getElementById('pdpa-action-input');
-  const hint = document.getElementById('pdpa-action-hint');
-  const btn = document.getElementById('pdpa-action-confirm-btn');
-
-  if (action === 'withdraw') {
-    title.textContent = '🔒 ถอนความยินยอม PDPA';
-    desc.innerHTML = `ถอนความยินยอมของ <strong>${fullName}</strong> (${empId})<br><span style="color:var(--sub);font-size:13px;">พนักงานจะต้องยินยอมใหม่เมื่อ Login ครั้งถัดไป</span>`;
-    hint.textContent = `พิมพ์รหัสพนักงาน "${empId}" เพื่อยืนยัน`;
-    btn.style.background = '#B91C1C';
-    btn.textContent = '✔ ถอนความยินยอม';
-  } else {
-    title.textContent = '🗑️ ลบข้อมูลสุขภาพประจำปี';
-    desc.innerHTML = `ลบข้อมูลผลตรวจสุขภาพประจำปีทั้งหมดของ <strong>${fullName}</strong> (${empId})<br><span style="color:#B91C1C;font-size:13px;font-weight:600;">⚠️ ไม่สามารถย้อนกลับได้ — ข้อมูลจะหายถาวร</span>`;
-    hint.textContent = `พิมพ์รหัสพนักงาน "${empId}" เพื่อยืนยัน`;
-    btn.style.background = '#7C3AED';
-    btn.textContent = '🗑️ ลบข้อมูลสุขภาพ';
-  }
-
-  input.value = '';
-  modal.dataset.empId = empId;
-  modal.dataset.fullName = fullName;
-  modal.dataset.action = action;
-  modal.classList.add('active');
-  setTimeout(() => input.focus(), 100);
-}
-
-function closePdpaActionModal() {
-  document.getElementById('pdpa-action-modal').classList.remove('active');
-}
-
-async function confirmPdpaAction() {
-  const modal = document.getElementById('pdpa-action-modal');
-  const empId = modal.dataset.empId;
-  const fullName = modal.dataset.fullName;
-  const action = modal.dataset.action;
-  const inputVal = document.getElementById('pdpa-action-input').value.trim();
-
-  if (inputVal !== empId) {
-    document.getElementById('pdpa-action-input').style.border = '2px solid #B91C1C';
-    showNotif('❌ รหัสพนักงานไม่ถูกต้อง', 'error');
-    return;
-  }
-
-  closePdpaActionModal();
-  const adminId = currentUser?.emp_id || 'unknown';
-  const now = new Date().toISOString();
-
-  if (action === 'withdraw') {
-    await doWithdrawConsent(empId, fullName, adminId, now);
-  } else {
-    await doDeleteHealthData(empId, fullName, adminId, now);
-  }
-}
-
-async function doWithdrawConsent(empId, fullName, adminId, now) {
+async function resetOneConsent(empId, fullName) {
+  if (!confirm(`รีเซ็ตความยินยอม PDPA ของ "${fullName}" ?\n\nพนักงานจะต้องยินยอมใหม่ในการเข้าสู่ระบบครั้งถัดไป`)) return;
   try {
-    // update withdrawn_at แทนการลบ เพื่อเก็บประวัติสถานะ "ถูกถอนแล้ว" ไว้แสดง
-    const { error } = await sb.from('pdpa_consents')
-      .update({ consent_main: false, consent_ai: false, withdrawn_at: now })
-      .eq('emp_id', empId);
+    const { error } = await sb.from('pdpa_consents').delete().eq('emp_id', empId);
     if (error) throw error;
     localStorage.removeItem('pdpa_consent_' + empId);
+    showNotif(`✅ รีเซ็ต PDPA ของ ${fullName} เรียบร้อย`, 'success');
 
-    // บันทึก Audit Log
-    await sb.from('pdpa_consent_log').insert({
-      emp_id: empId,
-      action: 'withdraw_consent',
-      details: { full_name: fullName, performed_by: adminId, timestamp: now }
-    });
-
-    showNotif(`✅ ถอนความยินยอม PDPA ของ ${fullName} เรียบร้อย`, 'success');
+    // อัปเดต UI ทันทีโดยไม่รอ Supabase query ใหม่
+    // หา row ของพนักงานคนนี้ใน table แล้วแก้ตรงๆ
+    const allRows = document.querySelectorAll('#admin-annual-content table tbody tr');
+    for (const row of allRows) {
+      if (row.querySelector('td strong')?.textContent === empId) {
+        // เปลี่ยน badge สถานะ
+        row.cells[3].innerHTML = `<span class="badge b-danger">❌ ยังไม่ยินยอม</span>`;
+        // เคลียร์วันที่
+        row.cells[4].innerHTML = `<span style="font-size:12px;color:var(--sub)">—</span>`;
+        // เคลียร์ปุ่มรีเซ็ต
+        row.cells[5].innerHTML = `<span style="font-size:11px;color:var(--sub)">—</span>`;
+        break;
+      }
+    }
+    // อัปเดต stat cards ด้วย
     await loadPdpaConsentTab();
   } catch(e) {
     showNotif('❌ เกิดข้อผิดพลาด: ' + e.message, 'error');
   }
 }
 
-async function doDeleteHealthData(empId, fullName, adminId, now) {
+async function resetAllConsents() {
+  if (!confirm('รีเซ็ตความยินยอม PDPA ของพนักงานทุกคน ?\n\nทุกคนจะต้องยินยอมใหม่ในการเข้าสู่ระบบครั้งถัดไป\n\nการดำเนินการนี้ไม่สามารถย้อนกลับได้')) return;
   try {
-    const { error } = await sb.from('annual_checkup').delete().eq('emp_id', empId);
+    const { error } = await sb.from('pdpa_consents').delete().neq('emp_id', '__none__');
     if (error) throw error;
-
-    // บันทึก Audit Log
-    await sb.from('pdpa_consent_log').insert({
-      emp_id: empId,
-      action: 'delete_health_data',
-      details: { full_name: fullName, performed_by: adminId, timestamp: now, note: 'ลบข้อมูล annual_checkup ตามสิทธิ์ PDPA' }
-    });
-
-    showNotif(`✅ ลบข้อมูลสุขภาพประจำปีของ ${fullName} เรียบร้อย`, 'success');
+    // ลบ localStorage ทุก key
+    Object.keys(localStorage).filter(k => k.startsWith('pdpa_consent_')).forEach(k => localStorage.removeItem(k));
+    showNotif('✅ รีเซ็ต PDPA ทุกคนเรียบร้อย — พนักงานจะถูกถามใหม่เมื่อ Login ครั้งถัดไป', 'success');
     await loadPdpaConsentTab();
   } catch(e) {
     showNotif('❌ เกิดข้อผิดพลาด: ' + e.message, 'error');
@@ -2902,31 +2837,20 @@ async function loadPdpaConsentTab() {
   const rows = emps.map(e => {
     const c = consentMap[e.emp_id];
     const hasConsent = c && c.consent_main && !c.withdrawn_at;
-    const wasWithdrawn = c && c.withdrawn_at;
-
-    // สถานะแบ่ง 3 กรณี
-    let statusBadge;
-    if (hasConsent) {
-      const dateConsented = new Date(c.consented_at).toLocaleDateString('th-TH', {day:'2-digit',month:'short',year:'numeric'});
-      statusBadge = `<div><span class="badge b-ok">✅ ยินยอมแล้ว</span><div style="font-size:11px;color:var(--sub);margin-top:3px;">เมื่อ ${dateConsented}</div></div>`;
-    } else if (wasWithdrawn) {
-      const dateWithdrawn = new Date(c.withdrawn_at).toLocaleDateString('th-TH', {day:'2-digit',month:'short',year:'numeric'});
-      statusBadge = `<div><span class="badge" style="background:#FEF3C7;color:#92400E;border:1px solid #FDE68A;">🔒 ถูกถอนแล้ว</span><div style="font-size:11px;color:var(--sub);margin-top:3px;">ถอนเมื่อ ${dateWithdrawn}</div></div>`;
-    } else {
-      statusBadge = `<span class="badge b-danger">❌ ยังไม่ยินยอม</span>`;
-    }
-
-    const deleteBtn = `<button class="btn-xs" style="background:#EDE9FE;color:#6D28D9;border:1px solid #C4B5FD;font-size:11px;" onclick="showPdpaConfirmModal('${e.emp_id}','${e.full_name}','delete')">🗑️ ลบข้อมูล</button>`;
-    const withdrawBtn = hasConsent
-      ? `<button class="btn-xs" style="background:#FEE2E2;color:#B91C1C;border:1px solid #FCA5A5;" onclick="showPdpaConfirmModal('${e.emp_id}','${e.full_name}','withdraw')">↺ ถอน Consent</button>`
+    const dateStr = c && c.consented_at ? new Date(c.consented_at).toLocaleDateString('th-TH') : '—';
+    const statusBadge = hasConsent
+      ? `<span class="badge b-ok">✅ ยินยอมแล้ว</span>`
+      : `<span class="badge b-danger">❌ ยังไม่ยินยอม</span>`;
+    const resetBtn = hasConsent
+      ? `<button class="btn-xs" style="background:#FEE2E2;color:#B91C1C;border:1px solid #FCA5A5;" onclick="resetOneConsent('${e.emp_id}','${e.full_name}')">↺ รีเซ็ต</button>`
       : `<span style="font-size:11px;color:var(--sub)">—</span>`;
     return `<tr>
       <td><strong>${e.emp_id}</strong></td>
       <td>${e.full_name}</td>
       <td style="font-size:12px">${e.department||'—'}</td>
       <td>${statusBadge}</td>
-      <td>${deleteBtn}</td>
-      <td>${withdrawBtn}</td>
+      <td style="font-size:12px;color:var(--sub)">${dateStr}</td>
+      <td>${resetBtn}</td>
     </tr>`;
   }).join('');
 
@@ -2953,14 +2877,17 @@ async function loadPdpaConsentTab() {
       </div>
     </div>
     <div class="card">
-      <div class="card-title">
+      <div class="card-title" style="justify-content:space-between;">
         🛡️ สถานะความยินยอม PDPA รายบุคคล
+        <button class="btn-xs" style="background:#FEE2E2;color:#B91C1C;border:1px solid #FCA5A5;padding:6px 14px;font-size:12px;" onclick="resetAllConsents()">
+          ↺ รีเซ็ตทุกคน (ตั้งต้นใหม่)
+        </button>
       </div>
       <div style="overflow-x:auto;">
         <table class="tbl">
           <thead><tr>
             <th>รหัส</th><th>ชื่อ-นามสกุล</th><th>แผนก</th>
-            <th>สถานะ</th><th>ลบข้อมูลสุขภาพ</th><th>จัดการ</th>
+            <th>สถานะ</th><th>วันที่ยินยอม</th><th>จัดการ</th>
           </tr></thead>
           <tbody>${rows}</tbody>
         </table>
@@ -4073,7 +4000,7 @@ async function exportRiskReportPDF() {
     const [empRes, annualRes, riskRes, trendRes] = await Promise.all([
       sb.from('employees').select('emp_id,full_name,department,gender').eq('role','employee'),
       sb.from('annual_checkup').select('emp_id,checkup_year,bmi,bp_systolic,fbs,total_cholesterol,triglyceride,hdl,sgot,sgpt,creatinine,ekg_result,ai_score,employees(full_name,department)').order('checkup_year',{ascending:false}).limit(1000),
-      sb.from('risk_checkup').select('emp_id,checkup_year,hearing_result,hearing_right,hearing_left,fvc,fev1,lung_result,ekg_risk_result,overall_result,chemical_test,employees(full_name,department)').order('checkup_year',{ascending:false}).limit(500),
+      sb.from('risk_checkup').select('emp_id,checkup_year,hearing_result,hearing_right,hearing_left,fvc,fev1,lung_result,va_far,va_near,color_vision,stereopsis,eye_external,ekg_risk_result,overall_result,chemical_test,employees(full_name,department)').order('checkup_year',{ascending:false}).limit(500),
       sb.from('annual_checkup').select('checkup_year,ai_score,bmi,bp_systolic,fbs,total_cholesterol').order('checkup_year').limit(1000),
     ]);
 
@@ -4110,6 +4037,7 @@ async function exportRiskReportPDF() {
     const riskYear = riskAll.filter(r=>r.checkup_year===latestYear);
     const hearingAbn = riskYear.filter(r=>r.hearing_result&&r.hearing_result!=='ปกติ'&&r.hearing_result!=='ไม่ได้ตรวจ').length;
     const lungAbn = riskYear.filter(r=>r.fvc&&r.fvc<80).length;
+    const eyeAbn = riskYear.filter(r=>(r.color_vision&&r.color_vision!=='ปกติ'&&r.color_vision!=='ไม่ได้ตรวจ')||(r.stereopsis&&r.stereopsis!=='ปกติ'&&r.stereopsis!=='ไม่ได้ตรวจ')||(r.eye_external&&r.eye_external!=='ปกติ'&&r.eye_external!=='ไม่ได้ตรวจ')).length;
 
     // Trend 3 ปี
     const trendYears = [...new Set(trendAll.map(r=>r.checkup_year))].sort().slice(-3);
@@ -4140,8 +4068,8 @@ async function exportRiskReportPDF() {
       const diff = lastAvg - prevAvg;
       const trend = diff > 2 ? 'ดีขึ้น' : diff < -2 ? 'ลดลง' : 'ทรงตัว';
       trendAnalysis = `คะแนนสุขภาพเฉลี่ยขององค์กรมีแนวโน้ม${trend}เมื่อเทียบปีก่อน`;
-      if (hearingAbn > 0 || lungAbn > 0) {
-        trendAnalysis += ` พบความเสี่ยงด้าน${hearingAbn>0?'การได้ยิน':''}${hearingAbn>0&&lungAbn>0?'และ':''}${lungAbn>0?'สมรรถภาพปอด':''} จำนวน ${hearingAbn+lungAbn} ราย จำเป็นต้องเฝ้าระวัง`;
+      if (hearingAbn > 0 || lungAbn > 0 || eyeAbn > 0) {
+        trendAnalysis += ` พบความเสี่ยงด้าน${hearingAbn>0?'การได้ยิน':''}${hearingAbn>0&&(lungAbn>0||eyeAbn>0)?'และ':''}${lungAbn>0?'สมรรถภาพปอด':''}${lungAbn>0&&eyeAbn>0?'และ':''}${eyeAbn>0?'สายตา':''} จำนวน ${hearingAbn+lungAbn+eyeAbn} ราย จำเป็นต้องเฝ้าระวัง`;
       }
     }
 
@@ -4223,9 +4151,10 @@ async function exportRiskReportPDF() {
         <!-- ปัจจัยเสี่ยงจากงาน -->
         <div style="border:1.5px solid #FEF3C7;background:#FFFBEB;border-radius:10px;padding:11px;margin-bottom:14px;">
           <div style="font-size:12px;font-weight:700;color:#92400E;margin-bottom:6px;">⚠️ ปัจจัยเสี่ยงจากการทำงาน</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11.5px;color:#374151;">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:11.5px;color:#374151;">
             <div>👂 สูญเสียการได้ยิน: <strong style="color:${hearingAbn>0?'#DC2626':'#16A34A'};">${hearingAbn} ราย</strong></div>
             <div>💨 สมรรถภาพปอดลดลง: <strong style="color:${lungAbn>0?'#DC2626':'#16A34A'};">${lungAbn} ราย</strong></div>
+            <div>👁️ ความผิดปกติสายตา: <strong style="color:${eyeAbn>0?'#DC2626':'#16A34A'};">${eyeAbn} ราย</strong></div>
           </div>
         </div>
 
