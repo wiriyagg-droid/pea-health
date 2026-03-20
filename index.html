@@ -1425,7 +1425,12 @@ function enterApp(data) {
   const isAdmin = data.role === 'admin';
   document.getElementById('sb-name').textContent = data.full_name;
   document.getElementById('sb-id').textContent = data.emp_id + ' · ' + (data.department || '');
-  document.getElementById('sb-avatar').textContent = data.full_name[2] || 'ก';
+  const _prefixes = ['นางสาว', 'นาง', 'นาย'];
+  const _leadingVowels = ['เ', 'แ', 'โ', 'ไ', 'ใ'];
+  let _name = data.full_name.trim();
+  for (const _p of _prefixes) { if (_name.startsWith(_p)) { _name = _name.slice(_p.length).trim(); break; } }
+  const _initial = _leadingVowels.includes(_name.charAt(0)) ? _name.charAt(1) : _name.charAt(0);
+  document.getElementById('sb-avatar').textContent = _initial || 'ก';
 
   // Toggle sidebar based on module (currentTab set before login)
   document.getElementById('sidebar-annual-nav').style.display = currentTab === 'annual' ? 'block' : 'none';
