@@ -1913,7 +1913,7 @@ function renderDashboard() {
         <div style="text-align:center;margin-top:8px;">
           <div style="font-family:'Prompt',sans-serif;font-size:16px;font-weight:700;color:${scolor}">${slabel}</div>
           <div style="font-size:11px;color:var(--sub);margin-top:3px;">${dateTH(d.checkup_date)}</div>
-          ${prev ? `<div style="font-size:11px;margin-top:5px;color:${score >= prev._score||calcScore(prev) ? 'var(--score-excellent)' : 'var(--danger)'};">${score >= prev._score||calcScore(prev) ? '▲ ดีขึ้น' : '▼ ลดลง'} ${Math.abs(score - prev._score||calcScore(prev))} คะแนน จากปีก่อน</div>` : ''}
+          ${prev ? `<div style="font-size:11px;margin-top:5px;color:${score >= (prev._score || calcScore(prev)) ? 'var(--score-excellent)' : 'var(--danger)'};">${score >= (prev._score || calcScore(prev)) ? '▲ ดีขึ้น' : '▼ ลดลง'} ${Math.abs(score - (prev._score || calcScore(prev)))} คะแนน จากปีก่อน</div>` : ''}
         </div>
       </div>
     </div>
@@ -2066,13 +2066,8 @@ function drawBPFBSChart() {
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { labels: { font: { family: 'Sarabun', size: 11 } } } },
       plugins: {
         legend: { labels: { font:{family:'Sarabun',size:11} } },
-        annotation: { annotations: {
-          prediabetes: { type:'line', yMin:100, yMax:100, borderColor:'rgba(245,158,11,.6)', borderWidth:1, borderDash:[4,4], label:{content:'เÁนณ์ Prediabetes 100',display:true,position:'end',font:{size:10,family:'Sarabun'},color:'#B45309'} },
-          diabetes: { type:'line', yMin:126, yMax:126, borderColor:'rgba(220,38,38,.5)', borderWidth:1, borderDash:[4,4], label:{content:'สงสัยเบาหวาน 126',display:true,position:'end',font:{size:10,family:'Sarabun'},color:'#DC2626'} }
-        }}
       },
       scales: {
         y: { min:0, suggestedMax:150, ticks:{font:{family:'Sarabun'}}, grid:{color:'#F3F4F6'} },
@@ -2589,20 +2584,21 @@ async function saveRisk() {
   };
   try {
     let error;
+    const wasEditing = !!editingRiskId;
     if (editingRiskId) {
       ({ error } = await sb.from('risk_checkup').update(payload).eq('id', editingRiskId));
     } else {
       ({ error } = await sb.from('risk_checkup').upsert(payload, { onConflict: 'emp_id,checkup_year' }));
     }
     if (error) throw error;
-    showNotif(editingRiskId ? '✅ แก้ไขข้อมูลเรียบร้อย!' : '✅ บันทึกข้อมูลเรียบร้อย!', 'success');
+    showNotif(wasEditing ? '✅ แก้ไขข้อมูลเรียบร้อย!' : '✅ บันทึกข้อมูลเรียบร้อย!', 'success');
     editingRiskId = null;
     document.getElementById('btn-save-risk').textContent = '💾 บันทึกข้อมูล';
     riskData = [];
     clearRiskForm();
     goto('my-risk');
   } catch(e) { showNotif('❌ ' + e.message, 'error'); }
-  btn.disabled = false; btn.textContent = editingRiskId ? '💾 บันทึกการแก้ไข' : '💾 บันทึกข้อมูล';
+  btn.disabled = false; btn.textContent = '💾 บันทึกข้อมูล';
 }
 
 function clearRiskForm() {
