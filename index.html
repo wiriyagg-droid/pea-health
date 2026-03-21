@@ -937,8 +937,7 @@ body > * { display: none !important; }
       <div class="sec-title">📅 ข้อมูลทั่วไป</div>
       <div class="grid-form">
         <div class="fg"><label class="fl">ปี พ.ศ.</label>
-        <select class="fi" id="rf-year">
-            <option value="2569">2569</option>
+          <select class="fi" id="rf-year">
             <option value="2568">2568</option>
             <option value="2567">2567</option>
             <option value="2566">2566</option>
@@ -1445,12 +1444,7 @@ function enterApp(data) {
   const isAdmin = data.role === 'admin';
   document.getElementById('sb-name').textContent = data.full_name;
   document.getElementById('sb-id').textContent = data.emp_id + ' · ' + (data.department || '');
-  const _prefixes = ['นางสาว', 'นาง', 'นาย'];
-  const _leadingVowels = ['เ', 'แ', 'โ', 'ไ', 'ใ'];
-  let _name = data.full_name.trim();
-  for (const _p of _prefixes) { if (_name.startsWith(_p)) { _name = _name.slice(_p.length).trim(); break; } }
-  const _initial = _leadingVowels.includes(_name.charAt(0)) ? _name.charAt(1) : _name.charAt(0);
-  document.getElementById('sb-avatar').textContent = _initial || 'ก';
+  document.getElementById('sb-avatar').textContent = data.full_name[2] || 'ก';
 
   // Toggle sidebar based on module (currentTab set before login)
   document.getElementById('sidebar-annual-nav').style.display = currentTab === 'annual' ? 'block' : 'none';
@@ -1933,7 +1927,7 @@ function renderDashboard() {
         <div style="text-align:center;margin-top:8px;">
           <div style="font-family:'Prompt',sans-serif;font-size:16px;font-weight:700;color:${scolor}">${slabel}</div>
           <div style="font-size:11px;color:var(--sub);margin-top:3px;">${dateTH(d.checkup_date)}</div>
-          ${prev ? `<div style="font-size:11px;margin-top:5px;color:${score >= (prev._score || calcScore(prev)) ? 'var(--score-excellent)' : 'var(--danger)'};">${score >= (prev._score || calcScore(prev)) ? '▲ ดีขึ้น' : '▼ ลดลง'} ${Math.abs(score - (prev._score || calcScore(prev)))} คะแนน จากปีก่อน</div>` : ''}
+          ${prev ? `<div style="font-size:11px;margin-top:5px;color:${score >= prev._score||calcScore(prev) ? 'var(--score-excellent)' : 'var(--danger)'};">${score >= prev._score||calcScore(prev) ? '▲ ดีขึ้น' : '▼ ลดลง'} ${Math.abs(score - prev._score||calcScore(prev))} คะแนน จากปีก่อน</div>` : ''}
         </div>
       </div>
     </div>
@@ -2086,8 +2080,13 @@ function drawBPFBSChart() {
     },
     options: {
       responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { font: { family: 'Sarabun', size: 11 } } } },
       plugins: {
         legend: { labels: { font:{family:'Sarabun',size:11} } },
+        annotation: { annotations: {
+          prediabetes: { type:'line', yMin:100, yMax:100, borderColor:'rgba(245,158,11,.6)', borderWidth:1, borderDash:[4,4], label:{content:'เÁนณ์ Prediabetes 100',display:true,position:'end',font:{size:10,family:'Sarabun'},color:'#B45309'} },
+          diabetes: { type:'line', yMin:126, yMax:126, borderColor:'rgba(220,38,38,.5)', borderWidth:1, borderDash:[4,4], label:{content:'สงสัยเบาหวาน 126',display:true,position:'end',font:{size:10,family:'Sarabun'},color:'#DC2626'} }
+        }}
       },
       scales: {
         y: { min:0, suggestedMax:150, ticks:{font:{family:'Sarabun'}}, grid:{color:'#F3F4F6'} },
@@ -2604,21 +2603,20 @@ async function saveRisk() {
   };
   try {
     let error;
-    const wasEditing = !!editingRiskId;
     if (editingRiskId) {
       ({ error } = await sb.from('risk_checkup').update(payload).eq('id', editingRiskId));
     } else {
       ({ error } = await sb.from('risk_checkup').upsert(payload, { onConflict: 'emp_id,checkup_year' }));
     }
     if (error) throw error;
-    showNotif(wasEditing ? '✅ แก้ไขข้อมูลเรียบร้อย!' : '✅ บันทึกข้อมูลเรียบร้อย!', 'success');
+    showNotif(editingRiskId ? '✅ แก้ไขข้อมูลเรียบร้อย!' : '✅ บันทึกข้อมูลเรียบร้อย!', 'success');
     editingRiskId = null;
     document.getElementById('btn-save-risk').textContent = '💾 บันทึกข้อมูล';
     riskData = [];
     clearRiskForm();
     goto('my-risk');
   } catch(e) { showNotif('❌ ' + e.message, 'error'); }
-  btn.disabled = false; btn.textContent = '💾 บันทึกข้อมูล';
+  btn.disabled = false; btn.textContent = editingRiskId ? '💾 บันทึกการแก้ไข' : '💾 บันทึกข้อมูล';
 }
 
 function clearRiskForm() {
@@ -3228,7 +3226,7 @@ async function loadAdmin() {
     </table></div>`;
 
   } else if (adminTab === 'annual') {
-    const { data } = await sb.from('annual_checkup').select('id,emp_id,checkup_year,bmi,bp_systolic,bp_diastolic,fbs,total_cholesterol,triglyceride,hdl,ldl,sgot,sgpt,creatinine,ekg_result,ai_score,employees(full_name,department)').order('checkup_year',{ascending:false}).limit(1000);
+    const { data } = await sb.from('annual_checkup').select('id,emp_id,checkup_year,bmi,bp_systolic,bp_diastolic,fbs,total_cholesterol,triglyceride,hdl,ldl,sgot,sgpt,creatinine,ekg_result,ai_score,employees(full_name,department)').order('checkup_year',{ascending:false}).limit(200);
     el.innerHTML = `<div style="overflow-x:auto;"><table class="emp-table">
       <thead><tr><th>ชื่อ</th><th>แผนก</th><th>ปี</th><th>BMI</th><th>ความดัน</th><th>FBS</th><th>Chol</th><th>คะแนน</th><th>🚨 Flag</th><th>แก้ไข</th></tr></thead>
       <tbody>${(data||[]).map(r=>`<tr>
@@ -3251,7 +3249,7 @@ async function loadAdmin() {
       </tr>`).join('')}</tbody></table></div>`;
 
   } else if (adminTab === 'risk') {
-    const { data } = await sb.from('risk_checkup').select('id,emp_id,checkup_year,bp_systolic,bp_diastolic,hearing_result,fvc,lung_result,color_vision,eye_external,bmi_risk,chemical_test,chemical_result,chemical_unit,ekg_risk_result,overall_result,employees(full_name,department)').order('checkup_year',{ascending:false}).limit(1000);
+    const { data } = await sb.from('risk_checkup').select('id,emp_id,checkup_year,bp_systolic,bp_diastolic,hearing_result,fvc,lung_result,color_vision,eye_external,bmi_risk,chemical_test,chemical_result,chemical_unit,ekg_risk_result,overall_result,employees(full_name,department)').order('checkup_year',{ascending:false}).limit(200);
     el.innerHTML = `<div style="overflow-x:auto;"><table class="emp-table">
       <thead><tr><th>ชื่อ</th><th>แผนก</th><th>ปี</th><th>ความดัน</th><th>การได้ยิน</th><th>ปอด FVC</th><th>EKG</th><th>ผลรวม</th></tr></thead>
       <tbody>${(data||[]).map(r=>`<tr>
@@ -3552,9 +3550,9 @@ const useYear = latestYearRes.data?.checkup_year || (new Date().getFullYear()+54
 ```
 // ดึงข้อมูลทั้งหมดพร้อมกัน (รวม 3 ปีสำหรับ trend)
 const [annualRes, empRes, annualWithEmpRes, trendRes] = await Promise.all([
-  sb.from('annual_checkup').select('emp_id,bmi,bp_systolic,fbs,total_cholesterol,hdl,triglyceride,sgot,sgpt,creatinine,ekg_result,ai_score')SKIP,
+  sb.from('annual_checkup').select('emp_id,bmi,bp_systolic,fbs,total_cholesterol,hdl,triglyceride,sgot,sgpt,creatinine,ekg_result,ai_score').eq('checkup_year', useYear).limit(500),
   sb.from('employees').select('emp_id,full_name,department').eq('role','employee'),
-  sb.from('annual_checkup').select('emp_id,ai_score,checkup_year,bp_systolic,fbs,bmi,total_cholesterol,triglyceride,hdl,creatinine,sgot,sgpt,ekg_result,employees(full_name,department,gender)')SKIP,
+  sb.from('annual_checkup').select('emp_id,ai_score,checkup_year,bp_systolic,fbs,bmi,total_cholesterol,triglyceride,hdl,creatinine,sgot,sgpt,ekg_result,employees(full_name,department,gender)').eq('checkup_year', useYear).limit(500),
   sb.from('annual_checkup').select('checkup_year,ai_score,bmi,bp_systolic,fbs,total_cholesterol').gte('checkup_year', useYear-2).order('checkup_year').limit(1000),
 ]);
 
@@ -3701,7 +3699,7 @@ const el = document.getElementById(‘overview-content’);
 if (!overviewAllRisk.length) {
 el.innerHTML = ‘<div class="loading"><span class="spinner"></span>กำลังโหลด…</div>’;
 const [{ data: riskAll }, { data: emps }, { data: trendData }] = await Promise.all([
-sb.from(‘risk_checkup’).select(‘id,emp_id,checkup_year,bp_systolic,bp_diastolic,hearing_result,fvc,ekg_risk_result,chemical_result,overall_result,employees(full_name,department,emp_id)’).order(‘checkup_year’,{ascending:false}).limit(1000),
+sb.from(‘risk_checkup’).select(‘id,emp_id,checkup_year,bp_systolic,bp_diastolic,hearing_result,fvc,ekg_risk_result,chemical_result,overall_result,employees(full_name,department,emp_id)’).order(‘checkup_year’,{ascending:false}).limit(500),
 sb.from(‘employees’).select(‘emp_id,full_name,department,role,risk_required’).eq(‘role’,‘employee’).eq(‘risk_required’,true),
 sb.from(‘risk_checkup’).select(‘checkup_year,overall_result,hearing_result,fvc,ekg_risk_result’).order(‘checkup_year’).limit(1000)
 ]);
@@ -3974,7 +3972,7 @@ async function loadAnnualRecords() {
 if (currentUser.role !== ‘admin’) return;
 const el = document.getElementById(‘annual-records-content’);
 el.innerHTML = ‘<div class="loading"><span class="spinner"></span>กำลังโหลด…</div>’;
-const { data } = await sb.from(‘annual_checkup’).select(‘id,emp_id,checkup_year,bmi,bp_systolic,bp_diastolic,fbs,total_cholesterol,triglyceride,hdl,ldl,sgot,sgpt,creatinine,ekg_result,ai_score,employees(full_name,department)’).order(‘checkup_year’,{ascending:false}).limit(1000);
+const { data } = await sb.from(‘annual_checkup’).select(‘id,emp_id,checkup_year,bmi,bp_systolic,bp_diastolic,fbs,total_cholesterol,triglyceride,hdl,ldl,sgot,sgpt,creatinine,ekg_result,ai_score,employees(full_name,department)’).order(‘checkup_year’,{ascending:false}).limit(300);
 window._arAllData = data||[];
 el.innerHTML = renderAnnualTable(data||[], data||[]);
 }
@@ -4052,7 +4050,7 @@ if (cnt) cnt.textContent = filtered.length + ’ รายการ’;
 
 async function pickRiskReportYear() {
 // ดึงปีที่มีข้อมูลใน risk_checkup
-const { data } = await sb.from(‘risk_checkup’).select(‘checkup_year’).order(‘checkup_year’, {ascending:false}).limit(1000);
+const { data } = await sb.from(‘risk_checkup’).select(‘checkup_year’).order(‘checkup_year’, {ascending:false}).limit(500);
 const years = […new Set((data||[]).map(r=>r.checkup_year))].sort((a,b)=>b-a);
 if (!years.length) { showNotif(‘ยังไม่มีข้อมูลปัจจัยเสี่ยงในระบบ’, ‘error’); return; }
 
@@ -4075,7 +4073,7 @@ try {
 const [empRes, annualRes, riskRes, trendRes] = await Promise.all([
 sb.from(‘employees’).select(‘emp_id,full_name,department,gender’).eq(‘role’,‘employee’),
 sb.from(‘annual_checkup’).select(‘emp_id,checkup_year,bmi,bp_systolic,fbs,total_cholesterol,triglyceride,hdl,sgot,sgpt,creatinine,ekg_result,ai_score,employees(full_name,department)’).order(‘checkup_year’,{ascending:false}).limit(1000),
-sb.from(‘risk_checkup’).select(‘emp_id,checkup_year,hearing_result,hearing_right,hearing_left,fvc,fev1,lung_result,va_far,va_near,color_vision,eye_external,ekg_risk_result,overall_result,chemical_test,bp_systolic,bp_diastolic,bmi_risk,creatinine_risk,employees(full_name,department)’).order(‘checkup_year’,{ascending:false}).limit(1000),
+sb.from(‘risk_checkup’).select(‘emp_id,checkup_year,hearing_result,hearing_right,hearing_left,fvc,fev1,lung_result,va_far,va_near,color_vision,eye_external,ekg_risk_result,overall_result,chemical_test,bp_systolic,bp_diastolic,bmi_risk,creatinine_risk,employees(full_name,department)’).order(‘checkup_year’,{ascending:false}).limit(500),
 sb.from(‘annual_checkup’).select(‘checkup_year,ai_score,bmi,bp_systolic,fbs,total_cholesterol’).order(‘checkup_year’).limit(1000),
 ]);
 
@@ -4337,7 +4335,7 @@ async function loadRiskRecords() {
 if (currentUser.role !== ‘admin’) return;
 const el = document.getElementById(‘risk-records-content’);
 el.innerHTML = ‘<div class="loading"><span class="spinner"></span>กำลังโหลด…</div>’;
-const { data } = await sb.from(‘risk_checkup’).select(‘id,emp_id,checkup_year,bp_systolic,bp_diastolic,pulse,hearing_result,fvc,chemical_test,chemical_result,chemical_unit,ekg_risk_result,overall_result,employees(full_name,department)’).order(‘checkup_year’,{ascending:false}).limit(1000);
+const { data } = await sb.from(‘risk_checkup’).select(‘id,emp_id,checkup_year,bp_systolic,bp_diastolic,pulse,hearing_result,fvc,chemical_test,chemical_result,chemical_unit,ekg_risk_result,overall_result,employees(full_name,department)’).order(‘checkup_year’,{ascending:false}).limit(300);
 window._rrAllData = data||[];
 el.innerHTML = renderRiskTable(data||[], data||[]);
 if (false) { // replaced
@@ -4457,21 +4455,6 @@ document.body.removeChild(printDiv);
 /* SQL to update existing records:
 UPDATE risk_checkup SET chemical_test = ‘น้ำมันแร่ (Mineral oils)’ WHERE chemical_test = ‘Toluene’;
 */
-
-// Populate rf-year options dynamically
-document.addEventListener(‘DOMContentLoaded’, function() {
-const sel = document.getElementById(‘rf-year’);
-if (sel) {
-const cur = new Date().getFullYear() + 543;
-sel.innerHTML = ‘’;
-for (let i = 0; i < 6; i++) {
-const y = cur - i;
-const opt = document.createElement(‘option’);
-opt.value = y; opt.textContent = y;
-sel.appendChild(opt);
-}
-}
-});
 
 function showNotif(msg, type=‘success’) {
 const el = document.getElementById(‘notif’);
