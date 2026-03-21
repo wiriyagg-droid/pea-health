@@ -3002,7 +3002,7 @@ async function loadExportPDF() {
     el.innerHTML = '<div class="empty"><div class="empty-ico">📄</div><h3>ยังไม่มีข้อมูลผลตรวจ</h3></div>';
     return;
   }
-  const years = annualData.map(r => r.checkup_year).sort((a,b) => b-a);.slice(0, 2);
+  const years = annualData.map(r => r.checkup_year).sort((a,b) => b-a);
   let selYear = years[0];
 
   function renderCert(year) {
