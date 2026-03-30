@@ -3148,20 +3148,33 @@ function toggleCfgVis(inputId, btn) {
   if (btn) btn.textContent = isHidden ? '🙈' : '👁';
 }
 
-function saveSystemSettings() {
+async function saveSystemSettings() {
   const sbUrl = document.getElementById('cfg-sb-url')?.value.trim();
   const sbKey = document.getElementById('cfg-sb-key')?.value.trim();
   const aiKey = document.getElementById('cfg-ai-key')?.value.trim();
   let saved = [];
+
   if (sbUrl) { localStorage.setItem('sb_url', sbUrl); saved.push('Supabase URL'); }
   if (sbKey) { localStorage.setItem('sb_key', sbKey); saved.push('Supabase Key'); }
   if (aiKey) { localStorage.setItem('ai_key', aiKey); saved.push('AI Key'); }
+
   // อัปเดต Supabase client ทันที
   const u = sbUrl || localStorage.getItem('sb_url');
   const k = sbKey || localStorage.getItem('sb_key');
   if (u && k) { try { sb = window.supabase.createClient(u, k); } catch(e) {} }
+
+  // 🆕 บันทึก AI Key ลง Supabase system_settings ด้วย
+  if (aiKey) {
+    try {
+      await sb.from('system_settings').upsert({ key: 'ai_key', value: aiKey }, { onConflict: 'key' });
+      saved.push('(Supabase)');
+    } catch(e) {
+      showNotif('⚠️ บันทึก localStorage แล้ว แต่ Supabase ล้มเหลว: ' + e.message, 'error');
+      return;
+    }
+  }
+
   showNotif('✅ บันทึกการตั้งค่าเรียบร้อย: ' + saved.join(', '), 'success');
-  // รีโหลด settings tab เพื่ออัปเดต status
   setTimeout(() => { if (adminTab === 'settings') loadAdmin(); }, 600);
 }
 
