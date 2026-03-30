@@ -2233,8 +2233,15 @@ async function loadAIPage() {
   </div>`;
 }
 
+async function getAIKey() {
+  try {
+    const { data } = await sb.from('system_settings').select('value').eq('key','ai_key').single();
+    if (data?.value) { localStorage.setItem('ai_key', data.value); return data.value; }
+  } catch(e) {}
+  return null;
+}  
 async function runAI() {
-  const aiKey = localStorage.getItem('ai_key');
+  const aiKey = localStorage.getItem('ai_key') || await getAIKey();
   const d = annualData.find(r => r.checkup_year === selectedYear) || annualData[0];
   if (!d) return;
   if (d.ai_summary) { showNotif('🔒 ประเมินแล้วสำหรับปี ' + selectedYear + ' (ประเมินได้1 ครั้งต่อปีเทานั้น)', 'error'); return; }
@@ -2285,7 +2292,7 @@ async function runAI() {
 แนะนำข้อมูลการรักษาที่จำเป็นและหมอมักไม่ได้บอก ควรตรวจซ้ำเมื่อไหร่ และตรวจอะไรเพิ่ม`;
 
   try {
-    if (!aiKey) throw new Error('ยังไม่ได้ตั้งค่า Anthropic API Key ในแถบสีเหลืองด้านบน');
+    if (!aiKey) throw new Error('ไม่พบ API Key กรุณาติดต่อผู้ดูแลระบบ');
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type':'application/json', 'x-api-key':aiKey, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
